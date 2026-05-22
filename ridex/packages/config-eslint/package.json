@@ -1,0 +1,24 @@
+{
+  "name": "@ridex/config-eslint",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./base.mjs",
+  "exports": {
+    "./base": "./base.mjs",
+    "./package": "./package.mjs",
+    "./next": "./next.mjs",
+    "./expo": "./expo.mjs"
+  },
+  "files": ["base.mjs", "package.mjs", "next.mjs", "expo.mjs"],
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0"
+  },
+  "peerDependencies": {
+    "eslint": "^9.17.0",
+    "typescript": "^5.4.0"
+  }
+}

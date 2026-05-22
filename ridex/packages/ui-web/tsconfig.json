@@ -1,0 +1,9 @@
+{
+  "extends": "@ridex/config-typescript/nextjs.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "lib": ["dom", "dom.iterable", "ES2023"]
+  },
+  "include": ["src/**/*"]
+}

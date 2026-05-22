@@ -1,0 +1,12 @@
+/* Shared CSS variables consumed by Tailwind in each web app. */
+/* Apps import this via globals.css alongside Tailwind directives. */
+
+@layer base {
+  :root {
+    --ridex-radius: 0.5rem;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+}

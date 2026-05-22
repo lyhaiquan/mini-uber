@@ -1,0 +1,30 @@
+{
+  "name": "ridex",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "dev": "turbo run dev --parallel",
+    "backend:build": "pnpm --filter @ridex/backend build",
+    "backend:dev": "pnpm --filter @ridex/backend start:dev",
+    "backend:test": "pnpm --filter @ridex/backend test",
+    "backend:test:e2e": "pnpm --filter @ridex/backend test:e2e",
+    "backend:lint": "pnpm --filter @ridex/backend lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@types/react": "19",
+        "@types/react-dom": "19",
+        "react": "19",
+        "react-dom": "19"
+      }
+    }
+  }
+}

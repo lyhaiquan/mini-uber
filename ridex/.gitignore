@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.next/
+.turbo/
+test-results/
+.expo/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+!.env.local.example
+*.log
+pnpm-debug.log*

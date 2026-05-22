@@ -11,6 +11,11 @@
 - On revoked refresh token reuse detection: invalidate all tokens in the token family immediately and emit a security audit event. Do not silently ignore reuse.
 - Add account lockout or throttling for repeated failed login attempts.
 
+## Local dev cookie scope
+
+- Web auth uses the shared `ridex_refresh` cookie name across customer, driver, and admin apps; local dev ports isolate those cookies by host/port.
+- Production deployments on a shared domain must separate hostnames or paths before enabling all surfaces to avoid refresh-cookie collisions.
+
 ## Authorization
 
 - Use RBAC for role-level access.

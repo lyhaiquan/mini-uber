@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "RideX Driver",
+    "slug": "ridex-driver",
+    "scheme": "ridex-driver",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a84ff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ridex.driver",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+    "android": {
+      "package": "com.ridex.driver",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a84ff"
+      },
+      "usesCleartextTraffic": true
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "extra": {
+      "apiBaseUrl": "http://localhost:3000/api/v1",
+      "wsUrl": "http://localhost:3000",
+      "mapboxToken": ""
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

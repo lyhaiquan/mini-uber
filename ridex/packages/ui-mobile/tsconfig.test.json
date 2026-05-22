@@ -1,0 +1,12 @@
+{
+  "extends": "@ridex/config-typescript/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["jest", "node", "react"]
+  },
+  "include": ["__tests__/**/*", "__mocks__/**/*", "src/**/*"]
+}

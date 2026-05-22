@@ -1,0 +1,9 @@
+{
+  "extends": "@ridex/config-typescript/expo.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "types": ["react", "react-native", "nativewind/types"]
+  },
+  "include": ["src/**/*"]
+}

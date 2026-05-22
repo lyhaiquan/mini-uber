@@ -1,0 +1,42 @@
+{
+  "name": "@ridex/web-driver",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3002",
+    "build": "next build",
+    "start": "next start --port 3002",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium"
+  },
+  "dependencies": {
+    "@ridex/shared-types": "workspace:*",
+    "@ridex/ui-tokens": "workspace:*",
+    "@ridex/ui-web": "workspace:*",
+    "lucide-react": "^0.469.0",
+    "next": "^15.1.3",
+    "next-themes": "^0.4.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "^3.23.8",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@ridex/config-eslint": "workspace:*",
+    "@ridex/config-typescript": "workspace:*",
+    "@types/node": "^20.14.0",
+    "@types/react": "~18.3.12",
+    "@types/react-dom": "~18.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.17.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.4.5",
+    "vitest": "^2.1.8"
+  }
+}

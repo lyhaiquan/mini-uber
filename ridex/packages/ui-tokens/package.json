@@ -1,0 +1,34 @@
+{
+  "name": "@ridex/ui-tokens",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./tailwind-preset": {
+      "types": "./dist/tailwind-preset.d.ts",
+      "import": "./dist/tailwind-preset.js",
+      "default": "./dist/tailwind-preset.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit",
+    "test": "echo \"no tests for ui-tokens\" && exit 0"
+  },
+  "devDependencies": {
+    "@ridex/config-eslint": "workspace:*",
+    "@ridex/config-typescript": "workspace:*",
+    "@types/node": "^20.14.0",
+    "eslint": "^9.17.0",
+    "typescript": "^5.4.5"
+  }
+}
