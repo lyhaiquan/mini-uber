@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useRideQuote } from "../use-ride-quote";
+
 import { ridesApi } from "@/lib/api";
 
 vi.mock("@/lib/api", () => ({

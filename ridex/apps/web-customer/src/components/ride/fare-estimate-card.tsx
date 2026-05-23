@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardContent, Skeleton } from "@ridex/ui-web";
 import type { QuoteResponse } from "@ridex/shared-types";
+import { Card, CardContent, Skeleton } from "@ridex/ui-web";
 import * as React from "react";
 
 void React;

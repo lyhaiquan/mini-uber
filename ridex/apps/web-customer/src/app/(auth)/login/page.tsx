@@ -22,7 +22,7 @@ export default function LoginPage() {
         if (!result.ok) {
           return { ok: false, error: result.error };
         }
-        setAuth({ accessToken: result.data.accessToken, user: result.data.user });
+        setAuth(result.data);
         toast.success("Đăng nhập thành công");
         router.replace("/home");
         return { ok: true };
