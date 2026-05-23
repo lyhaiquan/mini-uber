@@ -192,3 +192,77 @@ export function emitDriverLocation(
     });
   });
 }
+
+// --- Driver-side: ride offer push + accept/reject -------------------------
+//
+// Mirrors apps/backend/src/matching/matching.constants.ts. The OfferGateway
+// shares the default (driver) namespace with LocationGateway, so the same
+// socket created by createDriverSocket also carries these events.
+
+export const RIDE_OFFER_RECEIVED_EVENT = "ride.offer.received";
+export const RIDE_OFFER_CANCELLED_EVENT = "ride.offer.cancelled";
+export const RIDE_OFFER_ERROR_EVENT = "ride.offer.error";
+export const RIDE_OFFER_ACCEPT_EVENT = "ride.offer.accept";
+export const RIDE_OFFER_REJECT_EVENT = "ride.offer.reject";
+
+export type RouteConfidence = "high" | "low";
+
+export interface OfferReceivedPayload {
+  offerId: string;
+  rideId: string;
+  pickup: { lat: number; lng: number };
+  destination: { lat: number; lng: number };
+  distanceMeters: number;
+  durationSeconds: number;
+  routeConfidence: RouteConfidence;
+  expiresAt: string;
+}
+
+export type OfferCancellationReason =
+  | "TIMED_OUT"
+  | "RIDE_CANCELLED"
+  | "SUPERSEDED"
+  | "TIMEOUT_SCHEDULING_FAILED";
+
+export interface OfferCancelledPayload {
+  offerId: string;
+  reason: OfferCancellationReason;
+}
+
+export type OfferErrorCode =
+  | "NOT_FOR_DRIVER"
+  | "ALREADY_FINALIZED"
+  | "OFFER_NOT_FOUND"
+  | "INVALID_PAYLOAD";
+
+export interface OfferErrorPayload {
+  code: OfferErrorCode;
+  offerId?: string;
+}
+
+export type OfferAck =
+  | { ok: true }
+  | { ok: false; error: OfferErrorPayload };
+
+// Both accept/reject use the same ack shape as the OfferGateway. The reject
+// reason defaults to "driver_declined" per spec; passing a custom reason is
+// reserved for future taxonomy work.
+export function acceptOffer(socket: Socket, offerId: string): Promise<OfferAck> {
+  return new Promise((resolve) => {
+    socket.emit(RIDE_OFFER_ACCEPT_EVENT, { offerId }, (ack: OfferAck) => {
+      resolve(ack);
+    });
+  });
+}
+
+export function rejectOffer(
+  socket: Socket,
+  offerId: string,
+  reason: string = "driver_declined"
+): Promise<OfferAck> {
+  return new Promise((resolve) => {
+    socket.emit(RIDE_OFFER_REJECT_EVENT, { offerId, reason }, (ack: OfferAck) => {
+      resolve(ack);
+    });
+  });
+}
