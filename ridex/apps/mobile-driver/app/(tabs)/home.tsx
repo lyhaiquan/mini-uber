@@ -1,5 +1,4 @@
 import {
-  Button,
   MapView,
   SAIGON_FALLBACK,
   Screen,
@@ -10,21 +9,63 @@ import {
 } from "@ridex/ui-mobile";
 import * as Linking from "expo-linking";
 import * as React from "react";
-import { StyleSheet, View } from "react-native";
+import {
+  Alert,
+  AppState,
+  StyleSheet,
+  View,
+  type AppStateStatus
+} from "react-native";
 
+import { OnlineToggle } from "../../src/components/driver/online-toggle";
+import { PermissionBanner } from "../../src/components/driver/permission-banner";
+import { StatusPill } from "../../src/components/driver/status-pill";
+import {
+  useDriverAvailability,
+  useGoOffline,
+  useGoOnline
+} from "../../src/hooks/use-driver-status";
+import { useLocationStream } from "../../src/hooks/use-location-stream";
 import { env } from "../../src/lib/env";
 
 export default function HomeTab() {
   const permission = useLocationPermission();
   const mapboxToken = env.mapboxToken ?? "";
+  const availability = useDriverAvailability();
+  const goOnline = useGoOnline();
+  const goOffline = useGoOffline();
+  const isOnline = availability.data?.isOnline ?? false;
+
+  const stream = useLocationStream({
+    enabled: isOnline,
+    onPermissionDenied: () => {
+      Alert.alert(
+        "Mất quyền vị trí",
+        "Đang chuyển tài xế sang offline vì không truy cập được vị trí."
+      );
+      goOffline.mutate();
+    }
+  });
+
+  // AppState listener: when the app moves to background per spec, send a
+  // best-effort offline so the server doesn't keep the driver in the pool
+  // while their device is suspended (foreground-only stream).
+  React.useEffect(() => {
+    if (!isOnline) return;
+    const handler = (next: AppStateStatus) => {
+      if (next === "background" || next === "inactive") {
+        goOffline.mutate();
+      }
+    };
+    const sub = AppState.addEventListener("change", handler);
+    return () => sub.remove();
+  }, [isOnline, goOffline]);
 
   if (!mapboxToken) {
     return (
       <Screen>
         <Text variant="h2">Cần Mapbox token</Text>
-        <Text variant="body">
-          Đặt extra.mapboxToken trong app.json để bật map.
-        </Text>
+        <Text variant="body">Đặt extra.mapboxToken trong app.json.</Text>
       </Screen>
     );
   }
@@ -32,17 +73,8 @@ export default function HomeTab() {
   if (permission.isLoading || permission.status === "undetermined") {
     return (
       <Screen>
-        <Text variant="h2">Bản đồ tài xế</Text>
-        <Text variant="body">Cho phép vị trí để hiển thị xe của bạn.</Text>
-        <Button
-          className="mt-3 self-start"
-          loading={permission.isLoading}
-          onPress={() => {
-            void permission.request();
-          }}
-        >
-          Cho phép vị trí
-        </Button>
+        <Text variant="h2">Cần quyền vị trí</Text>
+        <PermissionBanner />
       </Screen>
     );
   }
@@ -50,64 +82,106 @@ export default function HomeTab() {
   if (permission.status === "denied" || permission.status === "restricted") {
     return (
       <Screen>
-        <Text variant="h2">Cần quyền vị trí</Text>
-        <Text variant="body">
-          Tài xế cần cấp quyền vị trí để cập nhật xe lên hệ thống.
-        </Text>
-        <Button className="mt-3 self-start" onPress={() => void Linking.openSettings()}>
-          Mở cài đặt
-        </Button>
+        <PermissionBanner />
       </Screen>
     );
   }
 
-  return <DriverMap mapboxToken={mapboxToken} />;
+  const onGo = () => {
+    if (stream.permissionDenied) {
+      void Linking.openSettings();
+      return;
+    }
+    goOnline.mutate(undefined, {
+      onError: (err) => {
+        Alert.alert(
+          "Không bật được online",
+          err instanceof Error ? err.message : "Vui lòng thử lại."
+        );
+      }
+    });
+  };
+
+  const onStop = () => {
+    Alert.alert("Tắt trạng thái online?", "Bạn sẽ ngừng nhận chuyến.", [
+      { text: "Không", style: "cancel" },
+      {
+        text: "Tắt",
+        style: "destructive",
+        onPress: () => {
+          goOffline.mutate(undefined, {
+            onError: (err) => {
+              Alert.alert(
+                "Không tắt được",
+                err instanceof Error ? err.message : "Vui lòng thử lại."
+              );
+            }
+          });
+        }
+      }
+    ]);
+  };
+
+  const toggleState: "online" | "offline" | "going-online" | "going-offline" =
+    goOnline.isPending
+      ? "going-online"
+      : goOffline.isPending
+        ? "going-offline"
+        : isOnline
+          ? "online"
+          : "offline";
+  const pillState: "online" | "offline" | "loading" = availability.isLoading
+    ? "loading"
+    : isOnline
+      ? "online"
+      : "offline";
+
+  return (
+    <Screen>
+      <View style={styles.header}>
+        <Text variant="h2">Trạm điều phối</Text>
+        <StatusPill state={pillState} />
+      </View>
+      <Text variant="caption">Hôm nay: 0 ₫ · 0 chuyến</Text>
+      <View style={styles.toggleWrap}>
+        <OnlineToggle
+          state={toggleState}
+          disabled={stream.permissionDenied}
+          onGo={onGo}
+          onStop={onStop}
+        />
+        <Text variant="caption">
+          {isOnline ? "Đang nhận chuyến..." : "Tap để bắt đầu nhận chuyến"}
+        </Text>
+      </View>
+      <View style={styles.mapWrap}>
+        <DriverMap mapboxToken={mapboxToken} />
+      </View>
+    </Screen>
+  );
 }
 
 function DriverMap({ mapboxToken }: { mapboxToken: string }) {
-  const { coords, isFallback } = useCurrentLocation({ autoRequest: false });
-
+  const { coords } = useCurrentLocation({ autoRequest: false });
   const markers = React.useMemo<MapMarkerData[]>(
     () => [{ id: "self", coord: coords, variant: "self", heading: 0 }],
     [coords]
   );
-
   return (
-    <View style={styles.container}>
-      <View style={styles.overlay}>
-        {isFallback ? (
-          <Text variant="caption" style={{ color: "#64748b" }}>
-            Đang dùng vị trí mặc định
-          </Text>
-        ) : (
-          <Text variant="caption">
-            {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
-          </Text>
-        )}
-      </View>
-      <MapView
-        token={mapboxToken}
-        initialCenter={coords ?? SAIGON_FALLBACK}
-        initialZoom={14}
-        markers={markers}
-        followUserLocation
-        style={styles.map}
-      />
-    </View>
+    <MapView
+      token={mapboxToken}
+      initialCenter={coords ?? SAIGON_FALLBACK}
+      initialZoom={14}
+      markers={markers}
+      followUserLocation
+      style={styles.map}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  overlay: {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    right: 12,
-    zIndex: 10,
-    backgroundColor: "rgba(255,255,255,0.85)",
-    padding: 10,
-    borderRadius: 8
-  },
-  map: { flex: 1 }
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  toggleWrap: { alignItems: "center", gap: 8, marginVertical: 12 },
+  mapWrap: { flex: 1, marginTop: 8, borderRadius: 8, overflow: "hidden" },
+  map: { width: "100%", height: 320 }
 });
