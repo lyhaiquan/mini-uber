@@ -86,6 +86,14 @@ export class RidesFacade {
     return ride === null ? null : rideToSummaryDto(ride);
   }
 
+  // Used by the ride-tracking gateway to forward a driver's location update
+  // into the right ride:{rideId} room. Returns null when the driver is not
+  // currently on an ACCEPTED+ ride (e.g. just went online but no offer yet).
+  async findAssignedActiveRideByDriver(driverUserId: string): Promise<RideSummaryDto | null> {
+    const ride = await this.ridesService.findAssignedActiveRideByDriver(driverUserId);
+    return ride === null ? null : rideToSummaryDto(ride);
+  }
+
   // Full-shape variant used by the customer-facing GET /rides/active endpoint.
   async getActiveRideForCustomer(customerId: string): Promise<RideResponseDto | null> {
     const ride = await this.ridesService.findActiveByCustomer(customerId);

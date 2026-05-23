@@ -3,6 +3,7 @@ export const DRIVER_WENT_OFFLINE_EVENT = "driver.went-offline";
 export const DRIVER_LOCATION_UPDATED_EVENT = "driver.location-updated";
 export const RIDE_REQUESTED_EVENT = "ride.requested";
 export const RIDE_COMPLETED_EVENT = "ride.completed";
+export const RIDE_TRANSITIONED_EVENT = "ride.transitioned";
 export const RIDE_MATCHING_STARTED_EVENT = "ride.matching.started";
 export const RIDE_MATCHING_NO_DRIVERS_EVENT = "ride.matching.no-drivers";
 export const RIDE_OFFER_CREATED_EVENT = "ride.offer.created";

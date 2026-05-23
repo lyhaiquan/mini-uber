@@ -101,6 +101,25 @@ export class RidesService {
       .getOne();
   }
 
+  // Used by the ride-tracking gateway to find which ride a driver is currently
+  // on, so a driver.location-updated event can be fanned out to the customer's
+  // ride room. Returns only rides at ACCEPTED+ to avoid leaking position to a
+  // customer whose ride is still in MATCHING.
+  async findAssignedActiveRideByDriver(driverUserId: string): Promise<Ride | null> {
+    return this.rideRepo
+      .createQueryBuilder("ride")
+      .where("ride.driver_user_id = :driverUserId", { driverUserId })
+      .andWhere("ride.status IN (:...statuses)", {
+        statuses: [
+          RideStatus.ACCEPTED,
+          RideStatus.DRIVER_ARRIVED,
+          RideStatus.IN_PROGRESS
+        ]
+      })
+      .orderBy("ride.accepted_at", "DESC")
+      .getOne();
+  }
+
   async countActive(): Promise<number> {
     return this.rideRepo
       .createQueryBuilder("ride")

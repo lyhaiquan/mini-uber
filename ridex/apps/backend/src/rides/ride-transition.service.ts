@@ -5,8 +5,9 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { DataSource, type EntityManager } from "typeorm";
 
 import type { DomainEvent } from "../common/domain-event";
-import { RIDE_COMPLETED_EVENT } from "../common/events/event-types";
+import { RIDE_COMPLETED_EVENT, RIDE_TRANSITIONED_EVENT } from "../common/events/event-types";
 import { StructuredLogger } from "../common/logging/structured-logger";
+import type { RideTransitionedPayload } from "./events/ride-events";
 import { ActorType, type TransitionActor } from "./enums/actor-type.enum";
 import { RideStatus } from "./enums/ride-status.enum";
 import { Ride } from "./entities/ride.entity";
@@ -115,14 +116,58 @@ export class RideTransitionService {
         CONTEXT
       );
 
-      return rideToResponseDto(ride);
+      return { dto: rideToResponseDto(ride), fromStatus, actorType: actor.type };
     });
 
-    if (response.status === RideStatus.COMPLETED) {
-      this.emitRideCompleted(response);
+    this.emitRideTransitioned(response.dto, response.fromStatus, response.actorType);
+
+    if (response.dto.status === RideStatus.COMPLETED) {
+      this.emitRideCompleted(response.dto);
     }
 
-    return response;
+    return response.dto;
+  }
+
+  private emitRideTransitioned(
+    ride: RideResponseDto,
+    fromStatus: RideStatus,
+    actorType: ActorType
+  ): void {
+    if (this.eventEmitter === undefined) {
+      return;
+    }
+
+    const event: DomainEvent<RideTransitionedPayload> = {
+      eventId: randomUUID(),
+      eventType: RIDE_TRANSITIONED_EVENT,
+      aggregateType: "ride",
+      aggregateId: ride.id,
+      payload: {
+        rideId: ride.id,
+        customerId: ride.customerId,
+        driverUserId: ride.driverUserId,
+        fromStatus,
+        toStatus: ride.status,
+        actorType,
+        occurredAt: new Date().toISOString()
+      },
+      correlationId: randomUUID(),
+      occurredAt: new Date().toISOString(),
+      emittedBy: "rides"
+    };
+
+    try {
+      this.eventEmitter.emit(RIDE_TRANSITIONED_EVENT, event);
+    } catch (error: unknown) {
+      this.logger.warn(
+        {
+          event: "ride.transitioned.emit_failed",
+          rideId: ride.id,
+          errorName: error instanceof Error ? error.name : "UnknownError"
+        },
+        CONTEXT
+      );
+    }
   }
 
   private async lockRide(manager: EntityManager, rideId: string): Promise<Ride> {
