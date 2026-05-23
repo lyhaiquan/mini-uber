@@ -98,6 +98,18 @@ export type QuoteResponse = z.infer<typeof quoteResponseSchema>;
 
 export const RIDE_ERROR_ALREADY_ACTIVE = "RIDE_ALREADY_ACTIVE" as const;
 
+export const driverOfferResponseSchema = z.object({
+  offerId: z.string().uuid(),
+  rideId: z.string().uuid(),
+  pickup: z.object({ lat: z.number(), lng: z.number() }),
+  destination: z.object({ lat: z.number(), lng: z.number() }),
+  distanceMeters: z.number().int().min(0),
+  durationSeconds: z.number().int().min(0),
+  routeConfidence: z.enum(["high", "low"]),
+  expiresAt: z.string()
+});
+export type DriverOfferResponse = z.infer<typeof driverOfferResponseSchema>;
+
 export const driverSummarySchema = z.object({
   id: z.string().uuid(),
   maskedEmail: z.string().min(1)

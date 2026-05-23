@@ -6,8 +6,11 @@ import * as React from "react";
 
 import { DriverMap } from "@/components/home/driver-map";
 import { EarningsStrip } from "@/components/driver/earnings-strip";
+import { OfferModal } from "@/components/driver/offer-modal";
 import { OnlineToggle } from "@/components/driver/online-toggle";
 import { StatusPill } from "@/components/driver/status-pill";
+import { useDriverActiveRide } from "@/hooks/use-active-ride";
+import { useDriverOffer } from "@/hooks/use-driver-offer";
 import {
   useDriverAvailability,
   useGoOffline,
@@ -15,6 +18,10 @@ import {
 } from "@/hooks/use-driver-status";
 import { useLocationStream } from "@/hooks/use-location-stream";
 import { useAuthStore } from "@/lib/auth-store";
+
+// Driver-share of the fare for the modal preview. Hard-coded for T020; T022
+// will surface the real split via a payments endpoint.
+const DRIVER_SHARE_BPS = 8_000;
 
 export default function DriverHomePage() {
   const router = useRouter();
@@ -31,6 +38,52 @@ export default function DriverHomePage() {
   const goOnline = useGoOnline();
   const goOffline = useGoOffline();
   const isOnline = availability.data?.isOnline ?? false;
+
+  // Restore the in-ride screen on reload: if the backend tells us a ride is
+  // assigned, jump there immediately. The redirect happens once per ride
+  // change so the driver can still navigate back home manually.
+  const activeRide = useDriverActiveRide();
+  React.useEffect(() => {
+    const ride = activeRide.data;
+    if (ride !== null && ride !== undefined) {
+      router.replace(`/rides/${ride.id}`);
+    }
+  }, [activeRide.data, router]);
+
+  // Offer subscription is only meaningful when the driver is online and
+  // currently between rides — backend won't push a second offer otherwise,
+  // but gating here avoids a useless socket subscription.
+  const offerCtl = useDriverOffer({ enabled: isOnline && activeRide.data === null });
+  const [offerPending, setOfferPending] = React.useState(false);
+
+  const onAcceptOffer = async () => {
+    if (offerCtl.offer === null) return;
+    setOfferPending(true);
+    const ack = await offerCtl.accept(offerCtl.offer.offerId);
+    setOfferPending(false);
+    if (ack.ok) {
+      router.push(`/rides/${offerCtl.offer.rideId}`);
+    } else {
+      // Race lost (ALREADY_FINALIZED) or network timeout — surface a toast.
+      toast.error(
+        ack.error.code === "ALREADY_FINALIZED"
+          ? "Chuyến đã được nhận hoặc đã hết hạn."
+          : "Mạng chậm, vui lòng thử lại."
+      );
+    }
+  };
+
+  const onRejectOffer = async () => {
+    if (offerCtl.offer === null) return;
+    setOfferPending(true);
+    await offerCtl.reject(offerCtl.offer.offerId);
+    setOfferPending(false);
+  };
+
+  const estimatedPayoutVnd =
+    offerCtl.offer === null
+      ? null
+      : null; // Offer payload doesn't carry total fare; T022 will pipe pricing snapshot through.
 
   const stream = useLocationStream({
     enabled: isOnline,
@@ -136,6 +189,19 @@ export default function DriverHomePage() {
       </div>
 
       <DriverMap />
+
+      <OfferModal
+        offer={offerCtl.offer}
+        pending={offerPending}
+        estimatedPayoutVnd={estimatedPayoutVnd}
+        onAccept={() => void onAcceptOffer()}
+        onReject={() => void onRejectOffer()}
+        onTimeout={() => offerCtl.clear()}
+      />
     </section>
   );
 }
+
+// Reserved for the T022 payout join — DRIVER_SHARE_BPS would multiply against
+// the pricing snapshot total once that data is plumbed into the offer payload.
+void DRIVER_SHARE_BPS;
