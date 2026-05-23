@@ -114,3 +114,81 @@ export function subscribeRide(
 export function unsubscribeRide(socket: Socket, rideId: string): void {
   socket.emit(RIDE_UNSUBSCRIBE_EVENT, { rideId });
 }
+
+// --- Driver-side: position publishing on the default (driver) namespace ----
+//
+// The driver app connects to the root socket.io endpoint (no namespace) which
+// is handled by LocationGateway on the backend. Customer ride-tracking uses
+// "/rides" via createTrackingSocket; the two are separate connections by
+// design — the driver socket requires role=DRIVER and never receives
+// ride-tracking traffic.
+
+export const DRIVER_LOCATION_UPDATE_EVENT = "driver.location.update";
+
+export interface DriverLocationPayload {
+  lat: number;
+  lng: number;
+  recordedAt: string;
+  heading?: number;
+  speed?: number;
+  accuracy?: number;
+}
+
+export type DriverLocationAckCode =
+  | "INVALID_PAYLOAD"
+  | "DRIVER_OFFLINE"
+  | "STALE_TIMESTAMP"
+  | "GPS_JUMP_DISTANCE"
+  | "GPS_JUMP_SPEED"
+  | "INTERNAL";
+
+export type DriverLocationAck =
+  | { ok: true }
+  | { ok: false; code: DriverLocationAckCode; message: string };
+
+export interface CreateDriverSocketOptions {
+  url: string;
+  // Same contract as createTrackingSocket — called per (re)connect handshake.
+  getToken: () => string | null;
+  onAuthError?: (payload: WsErrorPayload) => void;
+}
+
+export function createDriverSocket(opts: CreateDriverSocketOptions): Socket {
+  const baseUrl = opts.url.replace(/\/$/, "");
+  const socket = io(baseUrl, {
+    auth: (cb) => cb({ token: opts.getToken() ?? "" }),
+    // Drivers stay online for the whole shift — reconnect aggressively but
+    // never give up, so a brief flap doesn't take a driver offline silently.
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    transports: ["websocket"]
+  });
+
+  if (opts.onAuthError !== undefined) {
+    const handler = opts.onAuthError;
+    socket.on(WS_ERROR_EVENT, (payload: WsErrorPayload) => {
+      if (payload.code === "WS_AUTH_FAILED" || payload.code === "WS_FORBIDDEN") {
+        handler(payload);
+      }
+    });
+  }
+
+  return socket;
+}
+
+// Wraps the ack-style emit so the caller awaits a structured response instead
+// of chasing socket callbacks. GPS jump rejections (STALE_TIMESTAMP /
+// GPS_JUMP_*) come back as { ok: false } with a recognisable code — the spec
+// says FE silently ignores these (it does NOT toast or roll back state).
+export function emitDriverLocation(
+  socket: Socket,
+  payload: DriverLocationPayload
+): Promise<DriverLocationAck> {
+  return new Promise((resolve) => {
+    socket.emit(DRIVER_LOCATION_UPDATE_EVENT, payload, (ack: DriverLocationAck) => {
+      resolve(ack);
+    });
+  });
+}
