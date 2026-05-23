@@ -10,6 +10,7 @@ import { RidesModule } from "../rides/rides.module";
 import { RoutingModule } from "../routing/routing.module";
 import { CandidateScoringService } from "./candidates/candidate-scoring.service";
 import { CandidateSelectionService } from "./candidates/candidate-selection.service";
+import { DriverMeController } from "./driver-me.controller";
 import { RideOffer } from "./entities/ride-offer.entity";
 import { OfferGateway } from "./gateways/offer.gateway";
 import { RideRequestedMatchingListener } from "./listeners/ride-requested.listener";
@@ -31,6 +32,7 @@ import { RideOfferRepository } from "./offer/ride-offer.repository";
     LocationModule,
     RoutingModule
   ],
+  controllers: [DriverMeController],
   providers: [
     CandidateScoringService,
     CandidateSelectionService,
