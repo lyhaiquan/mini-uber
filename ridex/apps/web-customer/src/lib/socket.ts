@@ -14,7 +14,9 @@ export function getTrackingSocket(): Socket {
     return cached;
   }
   cached = createTrackingSocket({
-    url: env.NEXT_PUBLIC_API_BASE_URL,
+    // NEXT_PUBLIC_API_BASE_URL ends with /api/v1; the WS server lives at the
+    // host root, so use NEXT_PUBLIC_WS_URL as the socket transport target.
+    url: env.NEXT_PUBLIC_WS_URL,
     getToken: () => useAuthStore.getState().accessToken,
     onAuthError: () => {
       // Mirror REST: clear auth then let the route guard send the user to /login
