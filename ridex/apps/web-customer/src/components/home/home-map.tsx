@@ -24,8 +24,8 @@ export function HomeMap() {
   const {
     pickup,
     destination,
-    pickupLabel,
-    destinationLabel,
+    pickupAddress,
+    destinationAddress,
     setPickup,
     setDestination,
     reset
@@ -97,7 +97,7 @@ export function HomeMap() {
       <div className="text-xs text-surface-600 dark:text-surface-400">
         {pickup ? (
           <>
-            <strong>Đón:</strong> {pickupLabel ?? `${pickup.lat.toFixed(5)}, ${pickup.lng.toFixed(5)}`}
+            <strong>Đón:</strong> {pickupAddress ?? `${pickup.lat.toFixed(5)}, ${pickup.lng.toFixed(5)}`}
           </>
         ) : (
           <>Bấm trên bản đồ hoặc tìm để đặt điểm đón.</>
@@ -106,7 +106,7 @@ export function HomeMap() {
           <>
             {" · "}
             <strong>Đến:</strong>{" "}
-            {destinationLabel ??
+            {destinationAddress ??
               `${destination.lat.toFixed(5)}, ${destination.lng.toFixed(5)}`}
           </>
         ) : null}
