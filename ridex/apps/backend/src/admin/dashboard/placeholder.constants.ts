@@ -1,0 +1,4 @@
+export const PLACEHOLDER_SOURCE_FUTURE_TASK = "future-task";
+
+export const DASHBOARD_WINDOW_HOURS = 24;
+export const DASHBOARD_WINDOW_MS = DASHBOARD_WINDOW_HOURS * 60 * 60 * 1000;

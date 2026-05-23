@@ -1,6 +1,7 @@
 import "reflect-metadata";
 
 import { BadRequestException } from "@nestjs/common";
+import type { ConfigService } from "@nestjs/config";
 
 import { ROLES_KEY } from "../auth/guards/roles.decorator";
 import type { AuthenticatedUser } from "../auth/auth.types";
@@ -51,7 +52,7 @@ function createController(overrides: {
   };
   const configService = {
     get: jest.fn((key: string) => configValues[key])
-  } as unknown as import("@nestjs/config").ConfigService;
+  } as unknown as ConfigService;
   const controller = new RidesController(
     ridesService,
     transitionService,

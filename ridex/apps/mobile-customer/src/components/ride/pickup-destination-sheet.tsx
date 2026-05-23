@@ -1,5 +1,5 @@
-import { LocationSearch, type LatLng } from "@ridex/ui-mobile";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { LocationSearch, type LatLng } from "@ridex/ui-mobile";
 import * as React from "react";
 import { StyleSheet, Text, View } from "react-native";
 

@@ -1,0 +1,15 @@
+export const DRIVER_WENT_ONLINE_EVENT = "driver.went-online";
+export const DRIVER_WENT_OFFLINE_EVENT = "driver.went-offline";
+export const DRIVER_LOCATION_UPDATED_EVENT = "driver.location-updated";
+export const RIDE_REQUESTED_EVENT = "ride.requested";
+export const RIDE_COMPLETED_EVENT = "ride.completed";
+export const RIDE_MATCHING_STARTED_EVENT = "ride.matching.started";
+export const RIDE_MATCHING_NO_DRIVERS_EVENT = "ride.matching.no-drivers";
+export const RIDE_OFFER_CREATED_EVENT = "ride.offer.created";
+export const RIDE_OFFER_EXPIRED_EVENT = "ride.offer.expired";
+export const RIDE_OFFER_REJECTED_EVENT = "ride.offer.rejected";
+export const RIDE_OFFER_ACCEPTED_EVENT = "ride.offer.accepted";
+export const RIDE_OFFER_CANCELLED_EVENT = "ride.offer.cancelled";
+export const AUTH_USER_CREATED_EVENT = "auth.user.created";
+export const PAYMENT_SUCCEEDED_EVENT = "payment.succeeded";
+export const PAYMENT_FAILED_EVENT = "payment.failed";

@@ -1,50 +1,38 @@
 "use client";
 
-import type { User } from "@ridex/shared-types";
+import { ApiClient, okResponseSchema } from "@ridex/api-client";
+import type { z } from "zod";
 
-export interface ClientAuthResponse {
-  accessToken: string;
-  accessTokenExpiresInSeconds: number;
-  user: User;
-}
+import { clientAuthResponseSchema } from "./api";
+import { apiErrorToMessage } from "./api-error";
+
+export type ClientAuthResponse = z.infer<typeof clientAuthResponseSchema>;
 
 export type AuthActionResult =
   | { ok: true; data: ClientAuthResponse }
   | { ok: false; error: string };
 
+const localAuthClient = new ApiClient({
+  baseUrl: "",
+  credentials: "include",
+  getAccessToken: () => null,
+  onRefreshNeeded: async () => null,
+  onAuthFailure: () => undefined
+});
+
 async function postAuth(path: string, body?: unknown): Promise<AuthActionResult> {
-  let res: Response;
   try {
-    res = await fetch(path, {
+    const data = await localAuthClient.request({
       method: "POST",
-      headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-      credentials: "include",
-      cache: "no-store"
+      path,
+      body,
+      schema: clientAuthResponseSchema,
+      skipAuth: true
     });
-  } catch {
-    return { ok: false, error: "Không kết nối được máy chủ" };
+    return { ok: true, data };
+  } catch (error) {
+    return { ok: false, error: apiErrorToMessage(error) };
   }
-
-  const text = await res.text();
-  let json: unknown = null;
-  if (text.length > 0) {
-    try {
-      json = JSON.parse(text);
-    } catch {
-      json = { message: text };
-    }
-  }
-
-  if (!res.ok) {
-    const message =
-      typeof (json as { message?: string } | null)?.message === "string"
-        ? (json as { message: string }).message
-        : "Yêu cầu thất bại";
-    return { ok: false, error: message };
-  }
-
-  return { ok: true, data: json as ClientAuthResponse };
 }
 
 export const authActions = {
@@ -54,13 +42,14 @@ export const authActions = {
   refresh: () => postAuth("/api/auth/refresh"),
   logout: async (): Promise<void> => {
     try {
-      await fetch("/api/auth/logout", {
+      await localAuthClient.request({
         method: "POST",
-        credentials: "include",
-        cache: "no-store"
+        path: "/api/auth/logout",
+        schema: okResponseSchema,
+        skipAuth: true
       });
     } catch {
-      // ignore — store will be cleared regardless
+      // Store is cleared regardless.
     }
   }
 };

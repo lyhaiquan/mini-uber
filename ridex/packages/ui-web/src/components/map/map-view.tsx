@@ -33,6 +33,22 @@ export function MapView({
   styleUrl = DEFAULT_STYLE,
   className
 }: MapViewProps) {
+  React.useEffect(() => {
+    let cancelled = false;
+
+    void import("mapbox-gl").then((mod) => {
+      if (cancelled) return;
+      const mapboxWithTelemetry = mod.default as unknown as {
+        setTelemetryEnabled?: (enabled: boolean) => void;
+      };
+      mapboxWithTelemetry.setTelemetryEnabled?.(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleClick = React.useCallback(
     (event: MapLayerMouseEvent) => {
       if (!onMapClick) return;

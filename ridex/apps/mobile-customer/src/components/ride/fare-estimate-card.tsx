@@ -1,5 +1,5 @@
-import { Card, Text } from "@ridex/ui-mobile";
 import type { QuoteResponse } from "@ridex/shared-types";
+import { Card, Text } from "@ridex/ui-mobile";
 import * as React from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 

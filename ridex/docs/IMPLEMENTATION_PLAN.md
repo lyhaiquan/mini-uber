@@ -269,6 +269,120 @@ Make system behavior visible for operations and debugging.
 - Key ride, matching, payment, and API metrics are visible.
 - Logs and traces include correlation IDs.
 
+## Phase 11: Frontend Foundation
+
+### Goal
+
+Bootstrap monorepo frontend với 3 web app + 2 mobile app, share packages cho types/api-client/socket/UI tokens.
+
+### Main Tasks
+
+- Workspace setup: pnpm + Turborepo.
+- Shared packages: api-client, socket-client, shared-types, ui-tokens, ui-web, ui-mobile, eslint/tsconfig presets.
+- Web shells trio: Next.js 15 + Tailwind + shadcn/ui cho Customer/Driver/Admin.
+- Mobile shells: Expo + NativeWind + expo-router cho Customer/Driver.
+
+### Deliverables
+
+- 5 app skeletons chạy được `dev` cùng lúc.
+- Lint + build sạch toàn workspace.
+
+### Done Criteria
+
+- pnpm + turbo task `build/lint/dev` chạy parallel xanh.
+- Mỗi app render placeholder page.
+
+## Phase 12: Auth + Network + Map
+
+### Goal
+
+Login/register UI hoạt động trên cả 5 surface; API client + WebSocket client share; Mapbox tích hợp web + mobile.
+
+### Main Tasks
+
+- Auth screens (login/register) cross-surface.
+- Mapbox integration: web (mapbox-gl) + mobile (@rnmapbox/maps).
+- TanStack Query setup với JWT refresh interceptor.
+- Secure storage: httpOnly cookie (web), expo-secure-store (mobile).
+
+### Deliverables
+
+- User register + login + access protected page trên mọi surface.
+- Map render với pickup/destination marker.
+
+### Done Criteria
+
+- Auth flow round-trip backend Task 002.
+- Mapbox key load qua env, không hard-code.
+- 401 từ backend → auto refresh access token một lần.
+
+## Phase 13: Customer Flow
+
+### Goal
+
+Customer có thể request ride + theo dõi ride realtime.
+
+### Main Tasks
+
+- Request ride: pickup/destination picker, fare estimate (gọi backend mới `POST /rides/quote` nếu thêm; hoặc dùng pricing snapshot trả về cùng ride.created).
+- Surge multiplier display.
+- Ride tracking: state machine UI (REQUESTED → MATCHING → ACCEPTED → DRIVER_ARRIVED → IN_PROGRESS → COMPLETED).
+- Live driver position via WS.
+
+### Deliverables
+
+- Customer flow end-to-end: từ chọn điểm đến nhìn xe tới.
+
+### Done Criteria
+
+- WS reconnect tự động.
+- Hủy ride / no driver found được handle UI.
+
+## Phase 14: Driver Flow + Admin UI
+
+### Goal
+
+Driver có thể go online, nhận offer, hoàn thành ride. Admin xem dashboard.
+
+### Main Tasks
+
+- Driver online toggle + location streaming WS.
+- Offer modal với countdown 15s.
+- In-ride screen với transition buttons.
+- Admin dashboard consume Task 010 endpoint.
+
+### Deliverables
+
+- Driver flow end-to-end.
+- Admin có UI thay cho curl.
+
+### Done Criteria
+
+- Driver có thể nhận đúng offer, accept → state ACCEPTED đúng.
+- Admin chỉ access được nếu role ADMIN.
+
+## Phase 15: Wallet + Polish
+
+### Goal
+
+Hoàn tất các surface phụ: wallet, payment history; polish accessibility, responsive, dark mode optional.
+
+### Main Tasks
+
+- Wallet UI (balance + transaction history).
+- Payment history page.
+- Backend addon: `GET /me/wallet`, `GET /me/payments`, `GET /me/rides`.
+- Responsive breakpoints + dark mode.
+
+### Deliverables
+
+- Customer/driver xem được balance + lịch sử.
+
+### Done Criteria
+
+- Wallet UI khớp với double-entry ledger backend.
+- Pagination + empty state.
+
 ## Phase 10: AI + DevOps Advanced
 
 ### Goal

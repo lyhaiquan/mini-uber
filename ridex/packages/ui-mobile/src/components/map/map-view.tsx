@@ -12,6 +12,7 @@ let tokenSet = false;
 function ensureToken(token: string) {
   if (tokenSet) return;
   Mapbox.setAccessToken(token);
+  Mapbox.setTelemetryEnabled(false);
   tokenSet = true;
 }
 

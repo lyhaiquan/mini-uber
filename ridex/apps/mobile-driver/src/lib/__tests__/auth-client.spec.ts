@@ -56,3 +56,24 @@ describe("authClient.logout", () => {
     expect(await secureStorage.get("refreshToken")).toBeNull();
   });
 });
+
+describe("authClient.refresh", () => {
+  it("rotates secure storage tokens on refresh success", async () => {
+    await secureStorage.set("refreshToken", "old-refresh-token");
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          ...validTokens,
+          accessToken: "new-access-token",
+          refreshToken: "new-refresh-token"
+        })
+    });
+
+    const result = await authClient.refresh();
+
+    expect(result.ok).toBe(true);
+    expect(await secureStorage.get("accessToken")).toBe("new-access-token");
+    expect(await secureStorage.get("refreshToken")).toBe("new-refresh-token");
+  });
+});

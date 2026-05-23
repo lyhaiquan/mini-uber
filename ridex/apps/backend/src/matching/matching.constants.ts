@@ -1,0 +1,34 @@
+import {
+  RIDE_MATCHING_NO_DRIVERS_EVENT,
+  RIDE_MATCHING_STARTED_EVENT,
+  RIDE_OFFER_ACCEPTED_EVENT,
+  RIDE_OFFER_CANCELLED_EVENT,
+  RIDE_OFFER_CREATED_EVENT,
+  RIDE_OFFER_EXPIRED_EVENT,
+  RIDE_OFFER_REJECTED_EVENT
+} from "../common/events/event-types";
+
+export const MATCHING_OFFER_TIMEOUT_QUEUE = "matching-offer-timeout";
+export const MATCHING_OFFER_TIMEOUT_JOB_NAME = "matching.offer.timeout";
+export const DRIVER_OFFER_ROOM_PREFIX = "driver:";
+
+export const RIDE_OFFER_RECEIVED_WS_EVENT = "ride.offer.received";
+export const RIDE_OFFER_CANCELLED_WS_EVENT = "ride.offer.cancelled";
+export const RIDE_OFFER_ERROR_WS_EVENT = "ride.offer.error";
+export const RIDE_OFFER_ACCEPT_WS_EVENT = "ride.offer.accept";
+export const RIDE_OFFER_REJECT_WS_EVENT = "ride.offer.reject";
+
+export const DISTANCE_NORMALIZATION_METERS = 10_000;
+export const ETA_NORMALIZATION_SECONDS = 600;
+export const LOW_CONFIDENCE_SCORE_PENALTY = 0.1;
+
+export {
+  RIDE_MATCHING_NO_DRIVERS_EVENT,
+  RIDE_MATCHING_STARTED_EVENT,
+  RIDE_OFFER_ACCEPTED_EVENT,
+  RIDE_OFFER_CANCELLED_EVENT,
+  RIDE_OFFER_CREATED_EVENT,
+  RIDE_OFFER_EXPIRED_EVENT,
+  RIDE_OFFER_REJECTED_EVENT
+};
+

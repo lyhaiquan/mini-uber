@@ -1,3 +1,4 @@
+import type BottomSheet from "@gorhom/bottom-sheet";
 import {
   Button,
   LocationSearch,
@@ -10,7 +11,6 @@ import {
   type LatLng,
   type MapMarkerData
 } from "@ridex/ui-mobile";
-import BottomSheet from "@gorhom/bottom-sheet";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import * as React from "react";

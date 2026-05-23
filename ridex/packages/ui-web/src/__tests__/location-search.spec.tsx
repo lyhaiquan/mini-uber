@@ -37,7 +37,7 @@ describe("LocationSearch", () => {
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getAllByRole("option")).toHaveLength(2));
 
-    fireEvent.mouseDown(screen.getAllByRole("option")[0]);
+    fireEvent.mouseDown(screen.getAllByRole("option")[0]!);
     expect(onSelect).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Bến Thành, Quận 1, TP HCM" })
     );

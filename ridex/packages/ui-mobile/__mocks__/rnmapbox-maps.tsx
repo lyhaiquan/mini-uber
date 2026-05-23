@@ -8,7 +8,8 @@ const host =
     React.createElement(tag, rest, children);
 
 const Mapbox = {
-  setAccessToken: jest.fn()
+  setAccessToken: jest.fn(),
+  setTelemetryEnabled: jest.fn()
 };
 
 export default Mapbox;

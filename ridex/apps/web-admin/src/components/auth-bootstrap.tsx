@@ -17,7 +17,7 @@ export function AuthBootstrap(): null {
       const result = await authActions.refresh();
       if (cancelled) return;
       if (result.ok) {
-        setAuth({ accessToken: result.data.accessToken, user: result.data.user });
+        setAuth(result.data);
       } else {
         clear();
       }

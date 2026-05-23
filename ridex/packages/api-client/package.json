@@ -1,0 +1,29 @@
+{
+  "name": "@ridex/api-client",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ridex/shared-types": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@ridex/config-eslint": "workspace:*",
+    "@ridex/config-typescript": "workspace:*",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5",
+    "vitest": "^2.1.8"
+  }
+}

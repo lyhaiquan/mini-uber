@@ -23,7 +23,11 @@ export async function POST(): Promise<Response> {
   });
 
   if (backend.status >= 400) {
-    clearRefreshCookie(cookieJar);
+    // Only clear refresh cookie when the token itself is rejected (401/403).
+    // Transient backend errors (5xx, timeouts, 502) must NOT log the user out.
+    if (backend.status === 401 || backend.status === 403) {
+      clearRefreshCookie(cookieJar);
+    }
     return NextResponse.json(
       { message: flattenBackendError(backend.json as BackendErrorBody | null) },
       { status: backend.status }
@@ -32,7 +36,8 @@ export async function POST(): Promise<Response> {
 
   const tokens = authTokensResponseSchema.safeParse(backend.json);
   if (!tokens.success) {
-    clearRefreshCookie(cookieJar);
+    // Backend returned 2xx but with a malformed body — keep the cookie so the
+    // client can retry; the failure is on the backend contract, not the session.
     return NextResponse.json({ message: "Phản hồi backend không hợp lệ" }, { status: 502 });
   }
 

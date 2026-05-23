@@ -1,10 +1,18 @@
 /**
  * @vitest-environment jsdom
  */
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const mapboxGlMock = vi.hoisted(() => ({
+  setTelemetryEnabled: vi.fn()
+}));
+
 vi.mock("mapbox-gl/dist/mapbox-gl.css", () => ({}));
+vi.mock("mapbox-gl", () => ({
+  __esModule: true,
+  default: mapboxGlMock
+}));
 vi.mock("react-map-gl", () => ({
   __esModule: true,
   default: ({ children }: { children?: React.ReactNode }) => (
@@ -25,7 +33,7 @@ import { MapView } from "../components/map/map-view";
 afterEach(() => cleanup());
 
 describe("MapView", () => {
-  it("renders one marker per data entry plus route source when provided", () => {
+  it("renders one marker per data entry plus route source when provided", async () => {
     const { getAllByTestId, queryByTestId } = render(
       <MapView
         token="pk.test"
@@ -44,6 +52,9 @@ describe("MapView", () => {
     );
     expect(getAllByTestId("mock-marker")).toHaveLength(2);
     expect(queryByTestId("mock-source")).toBeTruthy();
+    await waitFor(() =>
+      expect(mapboxGlMock.setTelemetryEnabled).toHaveBeenCalledWith(false)
+    );
   });
 
   it("renders without route", () => {

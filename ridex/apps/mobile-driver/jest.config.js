@@ -13,8 +13,11 @@ module.exports = {
   },
   setupFiles: ["./jest.setup.js"],
   moduleNameMapper: {
+    "^@rnmapbox/maps$": "<rootDir>/__mocks__/@rnmapbox-maps.js",
     "^expo-secure-store$": "<rootDir>/jest.setup.js",
     "^expo-constants$": "<rootDir>/jest.setup.js",
+    "^expo-location$": "<rootDir>/__mocks__/expo-location.js",
+    "^expo-linking$": "<rootDir>/__mocks__/expo-linking.js",
     "^@ridex/shared-types$": "<rootDir>/../../packages/shared-types/src/index.ts"
   }
 };

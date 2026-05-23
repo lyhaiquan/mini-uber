@@ -1,4 +1,5 @@
 import {
+  Button,
   MapView,
   SAIGON_FALLBACK,
   Screen,
@@ -7,28 +8,41 @@ import {
   useLocationPermission,
   type MapMarkerData
 } from "@ridex/ui-mobile";
-import Constants from "expo-constants";
+import * as Linking from "expo-linking";
 import * as React from "react";
-import { Linking, Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-const MAPBOX_TOKEN = (Constants.expoConfig?.extra?.mapboxToken as string | undefined) ?? "";
+import { env } from "../../src/lib/env";
 
 export default function HomeTab() {
   const permission = useLocationPermission();
-  const { coords, isFallback } = useCurrentLocation();
+  const mapboxToken = env.mapboxToken ?? "";
 
-  const markers = React.useMemo<MapMarkerData[]>(
-    () => [{ id: "self", coord: coords, variant: "self", heading: 0 }],
-    [coords]
-  );
-
-  if (!MAPBOX_TOKEN) {
+  if (!mapboxToken) {
     return (
       <Screen>
         <Text variant="h2">Cần Mapbox token</Text>
         <Text variant="body">
           Đặt extra.mapboxToken trong app.json để bật map.
         </Text>
+      </Screen>
+    );
+  }
+
+  if (permission.isLoading || permission.status === "undetermined") {
+    return (
+      <Screen>
+        <Text variant="h2">Bản đồ tài xế</Text>
+        <Text variant="body">Cho phép vị trí để hiển thị xe của bạn.</Text>
+        <Button
+          className="mt-3 self-start"
+          loading={permission.isLoading}
+          onPress={() => {
+            void permission.request();
+          }}
+        >
+          Cho phép vị trí
+        </Button>
       </Screen>
     );
   }
@@ -40,14 +54,23 @@ export default function HomeTab() {
         <Text variant="body">
           Tài xế cần cấp quyền vị trí để cập nhật xe lên hệ thống.
         </Text>
-        <Pressable onPress={() => Linking.openSettings()} style={styles.cta}>
-          <Text variant="body" style={{ color: "white" }}>
-            Mở cài đặt
-          </Text>
-        </Pressable>
+        <Button className="mt-3 self-start" onPress={() => void Linking.openSettings()}>
+          Mở cài đặt
+        </Button>
       </Screen>
     );
   }
+
+  return <DriverMap mapboxToken={mapboxToken} />;
+}
+
+function DriverMap({ mapboxToken }: { mapboxToken: string }) {
+  const { coords, isFallback } = useCurrentLocation({ autoRequest: false });
+
+  const markers = React.useMemo<MapMarkerData[]>(
+    () => [{ id: "self", coord: coords, variant: "self", heading: 0 }],
+    [coords]
+  );
 
   return (
     <View style={styles.container}>
@@ -63,7 +86,7 @@ export default function HomeTab() {
         )}
       </View>
       <MapView
-        token={MAPBOX_TOKEN}
+        token={mapboxToken}
         initialCenter={coords ?? SAIGON_FALLBACK}
         initialZoom={14}
         markers={markers}
@@ -86,13 +109,5 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8
   },
-  map: { flex: 1 },
-  cta: {
-    marginTop: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: "#0a84ff",
-    borderRadius: 8,
-    alignSelf: "flex-start"
-  }
+  map: { flex: 1 }
 });

@@ -1,4 +1,31 @@
-# @ridex/mobile-driver
+# RideX Driver Mobile
+
+## Lần đầu chạy (sau khi clone)
+
+`@rnmapbox/maps` yêu cầu native code - KHÔNG chạy trong Expo Go.
+
+1. Đặt `RNMAPBOX_DOWNLOAD_TOKEN` (Mapbox secret token `sk.*`) làm env trước khi prebuild:
+   ```bash
+   export RNMAPBOX_DOWNLOAD_TOKEN=sk.xxxxx
+   ```
+2. Generate native folders:
+   ```bash
+   pnpm --filter @ridex/mobile-driver exec expo prebuild --clean
+   ```
+3. EAS dev client build (chỉ cần 1 lần / mỗi platform):
+   ```bash
+   pnpm --filter @ridex/mobile-driver exec eas build --profile development --platform ios
+   pnpm --filter @ridex/mobile-driver exec eas build --profile development --platform android
+   ```
+4. Cài dev client trên thiết bị qua QR / link, sau đó:
+   ```bash
+   pnpm --filter @ridex/mobile-driver start
+   ```
+   Mở app dev client, scan QR, app load.
+
+## Environment
+
+`app.json` -> `expo.extra.mapboxToken`: dùng public token `pk.*` (không phải `sk.*`).
 
 Expo (React Native) driver app. Tabs: Home / Trips / Earnings / Profile.
 
