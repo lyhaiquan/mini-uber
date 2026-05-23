@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardTitle } from "@ridex/ui-web";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
+import { DriverMap } from "@/components/home/driver-map";
 import { useAuthStore } from "@/lib/auth-store";
 
 export default function DriverHomePage() {
@@ -30,14 +30,7 @@ export default function DriverHomePage() {
         </p>
       </header>
 
-      <Card>
-        <CardContent className="space-y-2 p-6">
-          <CardTitle>Online / Offline (sắp ra mắt)</CardTitle>
-          <CardDescription>
-            Toggle online + nhận offer chuyến đi sẽ có ở T019 / T020.
-          </CardDescription>
-        </CardContent>
-      </Card>
+      <DriverMap />
     </section>
   );
 }

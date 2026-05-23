@@ -56,4 +56,29 @@ export type {
   AuthSubmitInput,
   AuthSubmitResult
 } from "./components/auth-form";
+export { MapView } from "./components/map/map-view";
+export type { MapViewProps } from "./components/map/map-view";
+export { MapMarker } from "./components/map/map-marker";
+export type { MapMarkerProps } from "./components/map/map-marker";
+export { MapRoute } from "./components/map/map-route";
+export type { MapRouteProps } from "./components/map/map-route";
+export { LocationSearch } from "./components/map/location-search";
+export type {
+  LocationSearchProps,
+  GeocodingResult
+} from "./components/map/location-search";
+export {
+  useCurrentLocation,
+  SAIGON_FALLBACK
+} from "./components/map/use-current-location";
+export type {
+  CurrentLocationResult,
+  CurrentLocationStatus,
+  UseCurrentLocationOptions
+} from "./components/map/use-current-location";
+export type {
+  LatLng,
+  MapMarkerData,
+  MapMarkerVariant
+} from "./components/map/types";
 export { cn } from "./lib/cn";

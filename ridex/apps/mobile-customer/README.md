@@ -27,8 +27,23 @@ pnpm --filter @ridex/mobile-customer type-check
 pnpm --filter @ridex/mobile-customer test
 ```
 
+## Mapbox setup (T015)
+
+1. Register at <https://account.mapbox.com> (free tier: 50K loads/month).
+2. Copy your public token (starts with `pk.`).
+3. In `app.json`:
+   - Set `expo.extra.mapboxToken` to that token (runtime usage).
+   - Replace the `RNMapboxMapsDownloadToken` placeholder in the `@rnmapbox/maps` plugin entry (download-time auth, can be a secret `sk.` token restricted to "Downloads:Read" if preferred).
+4. Restrict the token to your bundle ID (`com.ridex.customer`) and web origins in the Mapbox dashboard.
+5. `@rnmapbox/maps` requires native code. **Expo Go won't work** — run a dev client:
+   ```bash
+   pnpm --filter @ridex/mobile-customer exec expo prebuild --clean
+   # then EAS build a dev client, or build locally for Android:
+   pnpm --filter @ridex/mobile-customer exec expo run:android
+   ```
+
 ## Notes
 
 - New Architecture (`newArchEnabled: true`) is on by default.
 - HTTP cleartext is whitelisted for dev only; production must require HTTPS.
-- Mapbox token is empty in `app.json` — wired in T015.
+- Mapbox token wired in T015 (above).

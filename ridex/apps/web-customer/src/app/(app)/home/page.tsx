@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardTitle } from "@ridex/ui-web";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
+import { HomeMap } from "@/components/home/home-map";
 import { useAuthStore } from "@/lib/auth-store";
 
 export default function CustomerHomePage() {
@@ -30,18 +30,12 @@ export default function CustomerHomePage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Xin chào, {user.email}</h1>
         <p className="text-sm text-surface-700 dark:text-surface-300">
-          Bạn đang đăng nhập với vai trò <strong>{user.role}</strong>.
+          Bạn đang đăng nhập với vai trò <strong>{user.role}</strong>. Bấm trên bản đồ
+          để chọn điểm đón/đến.
         </p>
       </header>
 
-      <Card>
-        <CardContent className="space-y-2 p-6">
-          <CardTitle>Đặt xe (sắp ra mắt)</CardTitle>
-          <CardDescription>
-            Tính năng đặt xe + theo dõi tài xế live sẽ có ở T017 / T018.
-          </CardDescription>
-        </CardContent>
-      </Card>
+      <HomeMap />
     </section>
   );
 }

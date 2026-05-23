@@ -6,6 +6,11 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.spec.{ts,tsx}"],
-    environmentMatchGlobs: [["src/**/auth-form.spec.tsx", "jsdom"]]
+    environmentMatchGlobs: [
+      ["src/**/auth-form.spec.tsx", "jsdom"],
+      ["src/**/use-current-location.spec.ts", "jsdom"],
+      ["src/**/location-search.spec.tsx", "jsdom"],
+      ["src/**/map-view.spec.tsx", "jsdom"]
+    ]
   }
 });
