@@ -7,7 +7,7 @@ import { isMatchingEligible, RideStatus } from "./enums/ride-status.enum";
 import { RideNotFoundError, RideNotMatchingEligibleError } from "./errors/ride-errors";
 import { RideTransitionService } from "./ride-transition.service";
 import { RidesService } from "./rides.service";
-import { rideToSummaryDto } from "./rides.mapper";
+import { rideToResponseDto, rideToSummaryDto } from "./rides.mapper";
 
 export interface RidePaymentDto {
   id: string;
@@ -59,6 +59,12 @@ export class RidesFacade {
   async findActiveRideForCustomer(customerId: string): Promise<RideSummaryDto | null> {
     const ride = await this.ridesService.findActiveByCustomer(customerId);
     return ride === null ? null : rideToSummaryDto(ride);
+  }
+
+  // Full-shape variant used by the customer-facing GET /rides/active endpoint.
+  async getActiveRideForCustomer(customerId: string): Promise<RideResponseDto | null> {
+    const ride = await this.ridesService.findActiveByCustomer(customerId);
+    return ride === null ? null : rideToResponseDto(ride);
   }
 
   async getDashboardCounts(since: Date): Promise<RideDashboardCounts> {

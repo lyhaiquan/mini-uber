@@ -1,31 +1,92 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   ForbiddenException,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
   Post
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../auth/auth.types";
 import { Roles } from "../auth/guards/roles.decorator";
+import type { EnvironmentVariables } from "../config/env.validation";
+import { PricingFacade } from "../pricing/pricing.facade";
 import { Role } from "../users/dto/role.enum";
 import { CreateRideDto } from "./dto/create-ride.dto";
+import { QuoteRideDto } from "./dto/quote-ride.dto";
+import type { QuoteResponseDto } from "./dto/quote-response.dto";
 import type { RideResponseDto } from "./dto/ride-response.dto";
 import { TransitionRideDto } from "./dto/transition-ride.dto";
 import { ActorType, actorFromRole } from "./enums/actor-type.enum";
+import { RidesFacade } from "./rides.facade";
 import { RideTransitionService } from "./ride-transition.service";
 import { RidesService } from "./rides.service";
+
+const QUOTE_EXPIRES_IN_SECONDS = 60;
 
 @Controller("rides")
 export class RidesController {
   constructor(
     private readonly ridesService: RidesService,
-    private readonly transitionService: RideTransitionService
+    private readonly transitionService: RideTransitionService,
+    private readonly ridesFacade: RidesFacade,
+    private readonly pricingFacade: PricingFacade,
+    private readonly configService: ConfigService<EnvironmentVariables, true>
   ) {}
+
+  @Get("active")
+  @Roles(Role.CUSTOMER)
+  async getActive(
+    @CurrentUser() user: AuthenticatedUser
+  ): Promise<{ data: RideResponseDto | null }> {
+    const ride = await this.ridesFacade.getActiveRideForCustomer(user.userId);
+    return { data: ride };
+  }
+
+  @Post("quote")
+  @Roles(Role.CUSTOMER)
+  @HttpCode(HttpStatus.OK)
+  async quote(
+    @Body() dto: QuoteRideDto,
+    @CurrentUser() _user: AuthenticatedUser
+  ): Promise<{ data: QuoteResponseDto }> {
+    if (
+      dto.pickup.lat === dto.destination.lat &&
+      dto.pickup.lng === dto.destination.lng
+    ) {
+      throw new BadRequestException({
+        code: "QUOTE_INVALID_COORDINATES",
+        message: "Pickup và destination phải khác nhau."
+      });
+    }
+
+    const estimate = await this.pricingFacade.computeFareEstimate({
+      pickup: { lat: dto.pickup.lat, lng: dto.pickup.lng },
+      destination: { lat: dto.destination.lat, lng: dto.destination.lng }
+    });
+
+    return {
+      data: {
+        distanceMeters: estimate.distanceMeters,
+        durationSeconds: estimate.durationSeconds,
+        baseFareVnd: estimate.baseFareVnd,
+        perKmVnd: this.configService.get("PRICING_PER_KM_VND", { infer: true }),
+        perMinVnd: this.configService.get("PRICING_PER_MIN_VND", { infer: true }),
+        surgeMultiplier: estimate.surgeMultiplier,
+        totalVnd: estimate.totalVnd,
+        currency: "VND",
+        routeConfidence: estimate.routeConfidence,
+        estimatedAt: new Date().toISOString(),
+        expiresInSeconds: QUOTE_EXPIRES_IN_SECONDS
+      }
+    };
+  }
 
   @Post()
   @Roles(Role.CUSTOMER)
