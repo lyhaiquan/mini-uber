@@ -21,6 +21,7 @@ import { Role } from "../users/dto/role.enum";
 import { CreateRideDto } from "./dto/create-ride.dto";
 import { QuoteRideDto } from "./dto/quote-ride.dto";
 import type { QuoteResponseDto } from "./dto/quote-response.dto";
+import type { RideDetailResponseDto } from "./dto/ride-detail-response.dto";
 import type { RideResponseDto } from "./dto/ride-response.dto";
 import { TransitionRideDto } from "./dto/transition-ride.dto";
 import { ActorType, actorFromRole } from "./enums/actor-type.enum";
@@ -96,6 +97,18 @@ export class RidesController {
     @CurrentUser() user: AuthenticatedUser
   ): Promise<{ data: RideResponseDto }> {
     const ride = await this.ridesService.createRide(user.userId, dto);
+    return { data: ride };
+  }
+
+  @Get(":id")
+  async getRide(
+    @Param("id", new ParseUUIDPipe({ version: "4" })) rideId: string,
+    @CurrentUser() user: AuthenticatedUser
+  ): Promise<{ data: RideDetailResponseDto }> {
+    const ride = await this.ridesFacade.getRideDetail(rideId, {
+      userId: user.userId,
+      role: user.role
+    });
     return { data: ride };
   }
 

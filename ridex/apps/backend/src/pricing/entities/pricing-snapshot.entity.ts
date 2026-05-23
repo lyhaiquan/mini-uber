@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-import type { RouteConfidence } from "../../routing/routing.types";
+import type { PolylineFormat, RouteConfidence } from "../../routing/routing.types";
 
 // Postgres returns bigint as string by default; numeric() also as string.
 // Convert both to JS number. VND amounts fit safely in Number.MAX_SAFE_INTEGER
@@ -76,6 +76,12 @@ export class PricingSnapshot {
 
   @Column({ name: "total_vnd", type: "bigint", transformer: bigintTransformer })
   totalVnd!: number;
+
+  @Column({ name: "route_polyline", type: "text", nullable: true })
+  routePolyline!: string | null;
+
+  @Column({ name: "route_polyline_format", type: "text", nullable: true })
+  routePolylineFormat!: PolylineFormat | null;
 
   @Column({ name: "computed_at", type: "timestamptz", default: () => "now()" })
   computedAt!: Date;

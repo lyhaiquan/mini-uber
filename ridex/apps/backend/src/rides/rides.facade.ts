@@ -1,5 +1,13 @@
-import { Injectable } from "@nestjs/common";
+import { ForbiddenException, Injectable } from "@nestjs/common";
 
+import { PricingFacade } from "../pricing/pricing.facade";
+import { UsersFacade } from "../users/users.facade";
+import { Role } from "../users/dto/role.enum";
+import type {
+  DriverSummaryDto,
+  PricingSummaryDto,
+  RideDetailResponseDto
+} from "./dto/ride-detail-response.dto";
 import type { RideResponseDto } from "./dto/ride-response.dto";
 import type { RideSummaryDto } from "./dto/ride-summary.dto";
 import { systemActor } from "./enums/actor-type.enum";
@@ -8,6 +16,21 @@ import { RideNotFoundError, RideNotMatchingEligibleError } from "./errors/ride-e
 import { RideTransitionService } from "./ride-transition.service";
 import { RidesService } from "./rides.service";
 import { rideToResponseDto, rideToSummaryDto } from "./rides.mapper";
+
+// Driver identity is only revealed to the customer once the ride is at least ACCEPTED.
+// Earlier statuses (REQUESTED, MATCHING) must not leak a candidate driver's info even
+// if a row gets `driver_user_id` populated by a race.
+const DRIVER_VISIBLE_STATUSES: ReadonlySet<RideStatus> = new Set([
+  RideStatus.ACCEPTED,
+  RideStatus.DRIVER_ARRIVED,
+  RideStatus.IN_PROGRESS,
+  RideStatus.COMPLETED
+]);
+
+export interface RideRequester {
+  userId: string;
+  role: Role;
+}
 
 export interface RidePaymentDto {
   id: string;
@@ -28,7 +51,9 @@ export interface RideDashboardCounts {
 export class RidesFacade {
   constructor(
     private readonly ridesService: RidesService,
-    private readonly transitionService: RideTransitionService
+    private readonly transitionService: RideTransitionService,
+    private readonly usersFacade: UsersFacade,
+    private readonly pricingFacade: PricingFacade
   ) {}
 
   // --- Read API (cross-module consumers) ------------------------------------
@@ -65,6 +90,59 @@ export class RidesFacade {
   async getActiveRideForCustomer(customerId: string): Promise<RideResponseDto | null> {
     const ride = await this.ridesService.findActiveByCustomer(customerId);
     return ride === null ? null : rideToResponseDto(ride);
+  }
+
+  // Read-only ride view for GET /rides/:id. Performs object-level authorization
+  // (customer-own / driver-assigned / admin) and only attaches driver identity once
+  // the ride is at status ACCEPTED+ to avoid leaking a candidate driver during MATCHING.
+  async getRideDetail(
+    rideId: string,
+    requester: RideRequester
+  ): Promise<RideDetailResponseDto> {
+    const ride = await this.ridesService.findById(rideId);
+    if (ride === null) {
+      throw new RideNotFoundError();
+    }
+
+    if (requester.role === Role.CUSTOMER && ride.customerId !== requester.userId) {
+      throw new ForbiddenException({
+        code: "RIDE_FORBIDDEN_ACCESS",
+        message: "You are not allowed to view this ride."
+      });
+    }
+    if (requester.role === Role.DRIVER && ride.driverUserId !== requester.userId) {
+      throw new ForbiddenException({
+        code: "RIDE_FORBIDDEN_ACCESS",
+        message: "You are not allowed to view this ride."
+      });
+    }
+
+    const base = rideToResponseDto(ride);
+
+    let driver: DriverSummaryDto | null = null;
+    if (ride.driverUserId !== null && DRIVER_VISIBLE_STATUSES.has(ride.status)) {
+      const driverUser = await this.usersFacade.getUserById(ride.driverUserId);
+      if (driverUser !== null) {
+        driver = { id: driverUser.id, maskedEmail: maskEmail(driverUser.email) };
+      }
+    }
+
+    const snapshot = await this.pricingFacade.getSnapshotForRide(rideId);
+    const pricing: PricingSummaryDto | null = snapshot === null
+      ? null
+      : {
+          currency: snapshot.currency,
+          totalVnd: snapshot.totalVnd,
+          distanceMeters: snapshot.distanceMeters,
+          durationSeconds: snapshot.durationSeconds,
+          surgeMultiplier: snapshot.surgeMultiplier,
+          baseFareVnd: snapshot.baseFareVnd,
+          surgeAmountVnd: snapshot.surgeAmountVnd,
+          routePolyline: snapshot.routePolyline,
+          routePolylineFormat: snapshot.routePolylineFormat
+        };
+
+    return { ...base, driver, pricing };
   }
 
   async getDashboardCounts(since: Date): Promise<RideDashboardCounts> {
@@ -110,4 +188,18 @@ export class RidesFacade {
       reason
     });
   }
+}
+
+// Mask local-part of email except the first character to hide driver identity
+// while still letting customer recognize who is assigned. "alice@x.com" → "a***@x.com".
+// Local-parts shorter than 2 chars degrade to "*@domain" — never reveals the full local.
+function maskEmail(email: string): string {
+  const atIndex = email.indexOf("@");
+  if (atIndex <= 0) {
+    return "***";
+  }
+  const local = email.slice(0, atIndex);
+  const domain = email.slice(atIndex);
+  const head = local.length === 1 ? "" : local[0];
+  return `${head}***${domain}`;
 }

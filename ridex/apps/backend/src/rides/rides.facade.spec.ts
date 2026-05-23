@@ -1,3 +1,6 @@
+import type { PricingFacade } from "../pricing/pricing.facade";
+import { Role } from "../users/dto/role.enum";
+import type { UsersFacade } from "../users/users.facade";
 import type { Ride } from "./entities/ride.entity";
 import { ActorType } from "./enums/actor-type.enum";
 import { RideStatus } from "./enums/ride-status.enum";
@@ -42,6 +45,8 @@ function createFacade(): {
   facade: RidesFacade;
   ridesService: jest.Mocked<RidesService>;
   transitionService: jest.Mocked<RideTransitionService>;
+  usersFacade: { getUserById: jest.Mock };
+  pricingFacade: { getSnapshotForRide: jest.Mock };
 } {
   const ridesService = {
     findById: jest.fn(),
@@ -55,8 +60,16 @@ function createFacade(): {
     transition: jest.fn()
   } as unknown as jest.Mocked<RideTransitionService>;
 
-  const facade = new RidesFacade(ridesService, transitionService);
-  return { facade, ridesService, transitionService };
+  const usersFacade = { getUserById: jest.fn() };
+  const pricingFacade = { getSnapshotForRide: jest.fn() };
+
+  const facade = new RidesFacade(
+    ridesService,
+    transitionService,
+    usersFacade as unknown as UsersFacade,
+    pricingFacade as unknown as PricingFacade
+  );
+  return { facade, ridesService, transitionService, usersFacade, pricingFacade };
 }
 
 describe("RidesFacade", () => {
@@ -244,6 +257,116 @@ describe("RidesFacade", () => {
         cancelledLast24h: 0,
         noDriversFoundLast24h: 0,
         totalLast24h: 0
+      });
+    });
+  });
+
+  describe("getRideDetail", () => {
+    it("throws RIDE_NOT_FOUND when ride is missing", async () => {
+      const { facade, ridesService } = createFacade();
+      ridesService.findById.mockResolvedValue(null);
+
+      await expect(
+        facade.getRideDetail(RIDE_ID, { userId: CUSTOMER_ID, role: Role.CUSTOMER })
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: "RIDE_NOT_FOUND" })
+      });
+    });
+
+    it("forbids customer from viewing another customer's ride", async () => {
+      const { facade, ridesService } = createFacade();
+      ridesService.findById.mockResolvedValue(makeRide({ customerId: "other-customer" }));
+
+      await expect(
+        facade.getRideDetail(RIDE_ID, { userId: CUSTOMER_ID, role: Role.CUSTOMER })
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: "RIDE_FORBIDDEN_ACCESS" })
+      });
+    });
+
+    it("forbids driver from viewing an unassigned ride", async () => {
+      const { facade, ridesService } = createFacade();
+      ridesService.findById.mockResolvedValue(
+        makeRide({ driverUserId: "other-driver", status: RideStatus.ACCEPTED })
+      );
+
+      await expect(
+        facade.getRideDetail(RIDE_ID, { userId: DRIVER_ID, role: Role.DRIVER })
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: "RIDE_FORBIDDEN_ACCESS" })
+      });
+    });
+
+    it("allows admin to view any ride", async () => {
+      const { facade, ridesService, pricingFacade } = createFacade();
+      ridesService.findById.mockResolvedValue(makeRide({ customerId: "other-customer" }));
+      pricingFacade.getSnapshotForRide.mockResolvedValue(null);
+
+      const result = await facade.getRideDetail(RIDE_ID, {
+        userId: "admin-id",
+        role: Role.ADMIN
+      });
+      expect(result.id).toBe(RIDE_ID);
+    });
+
+    it("omits driver identity while status < ACCEPTED (MATCHING leak guard)", async () => {
+      const { facade, ridesService, usersFacade, pricingFacade } = createFacade();
+      ridesService.findById.mockResolvedValue(
+        makeRide({ status: RideStatus.MATCHING, driverUserId: DRIVER_ID })
+      );
+      pricingFacade.getSnapshotForRide.mockResolvedValue(null);
+
+      const result = await facade.getRideDetail(RIDE_ID, {
+        userId: CUSTOMER_ID,
+        role: Role.CUSTOMER
+      });
+      expect(result.driver).toBeNull();
+      expect(usersFacade.getUserById).not.toHaveBeenCalled();
+    });
+
+    it("returns masked driver email once ride is ACCEPTED+", async () => {
+      const { facade, ridesService, usersFacade, pricingFacade } = createFacade();
+      ridesService.findById.mockResolvedValue(
+        makeRide({ status: RideStatus.ACCEPTED, driverUserId: DRIVER_ID })
+      );
+      usersFacade.getUserById.mockResolvedValue({
+        id: DRIVER_ID,
+        email: "alice@example.com",
+        role: Role.DRIVER,
+        createdAt: new Date().toISOString()
+      });
+      pricingFacade.getSnapshotForRide.mockResolvedValue(null);
+
+      const result = await facade.getRideDetail(RIDE_ID, {
+        userId: CUSTOMER_ID,
+        role: Role.CUSTOMER
+      });
+      expect(result.driver).toEqual({ id: DRIVER_ID, maskedEmail: "a***@example.com" });
+    });
+
+    it("attaches pricing snapshot summary when available", async () => {
+      const { facade, ridesService, pricingFacade } = createFacade();
+      ridesService.findById.mockResolvedValue(makeRide());
+      pricingFacade.getSnapshotForRide.mockResolvedValue({
+        currency: "VND",
+        totalVnd: 104400,
+        distanceMeters: 12500,
+        durationSeconds: 1500,
+        surgeMultiplier: 1.2,
+        baseFareVnd: 12000,
+        surgeAmountVnd: 17400,
+        routePolyline: "polylinedata",
+        routePolylineFormat: "polyline5"
+      });
+
+      const result = await facade.getRideDetail(RIDE_ID, {
+        userId: CUSTOMER_ID,
+        role: Role.CUSTOMER
+      });
+      expect(result.pricing).toMatchObject({
+        totalVnd: 104400,
+        routePolyline: "polylinedata",
+        routePolylineFormat: "polyline5"
       });
     });
   });

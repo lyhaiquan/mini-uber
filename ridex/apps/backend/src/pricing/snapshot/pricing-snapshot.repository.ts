@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
-import type { RouteConfidence } from "../../routing/routing.types";
+import type { PolylineFormat, RouteConfidence } from "../../routing/routing.types";
 import { PricingSnapshot } from "../entities/pricing-snapshot.entity";
 import type { FareBreakdown } from "../pricing.types";
 
@@ -10,6 +10,8 @@ export interface InsertSnapshotInput extends FareBreakdown {
   rideId: string;
   pickupH3R8: string;
   routeConfidence: RouteConfidence;
+  routePolyline: string | null;
+  routePolylineFormat: PolylineFormat | null;
 }
 
 @Injectable()
@@ -35,6 +37,8 @@ export class PricingSnapshotRepository {
       surgeAmountVnd: input.surgeAmountVnd,
       minimumFareVnd: input.minimumFareVnd,
       totalVnd: input.totalVnd,
+      routePolyline: input.routePolyline,
+      routePolylineFormat: input.routePolylineFormat,
       computedAt: new Date(),
       version: 0
     });

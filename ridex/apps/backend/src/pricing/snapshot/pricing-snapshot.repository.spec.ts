@@ -36,7 +36,9 @@ describe("PricingSnapshotRepository", () => {
       surgeAmountVnd: 0,
       minimumFareVnd: 15000,
       totalVnd: 17500,
-      routeConfidence: "high"
+      routeConfidence: "high",
+      routePolyline: null,
+      routePolylineFormat: null
     });
 
     expect(typeormRepository.create).toHaveBeenCalledWith(

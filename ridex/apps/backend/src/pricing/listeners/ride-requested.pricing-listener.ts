@@ -86,7 +86,9 @@ export class RideRequestedPricingListener {
         ...breakdown,
         rideId,
         pickupH3R8: cellR8,
-        routeConfidence: route.confidence
+        routeConfidence: route.confidence,
+        routePolyline: route.polyline,
+        routePolylineFormat: route.polylineFormat
       });
 
       const snapshotEvent: DomainEvent<{
