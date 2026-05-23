@@ -69,3 +69,31 @@ export type TransitionRideDto = z.infer<typeof transitionRideDtoSchema>;
 export function isTerminalStatus(status: RideStatus): boolean {
   return TERMINAL_RIDE_STATUSES.includes(status);
 }
+
+const quoteCoordinateSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180)
+});
+
+export const quoteRequestSchema = z.object({
+  pickup: quoteCoordinateSchema,
+  destination: quoteCoordinateSchema
+});
+export type QuoteRequest = z.infer<typeof quoteRequestSchema>;
+
+export const quoteResponseSchema = z.object({
+  distanceMeters: z.number().int().min(0),
+  durationSeconds: z.number().int().min(0),
+  baseFareVnd: z.number().int().min(0),
+  perKmVnd: z.number().int().min(0),
+  perMinVnd: z.number().int().min(0),
+  surgeMultiplier: z.number().min(1),
+  totalVnd: z.number().int().min(0),
+  currency: z.literal("VND"),
+  routeConfidence: z.enum(["high", "low"]),
+  estimatedAt: isoDateTimeSchema,
+  expiresInSeconds: z.number().int().positive()
+});
+export type QuoteResponse = z.infer<typeof quoteResponseSchema>;
+
+export const RIDE_ERROR_ALREADY_ACTIVE = "RIDE_ALREADY_ACTIVE" as const;

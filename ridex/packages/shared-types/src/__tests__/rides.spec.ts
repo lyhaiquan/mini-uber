@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   createRideDtoSchema,
   isTerminalStatus,
+  quoteRequestSchema,
+  quoteResponseSchema,
+  RIDE_ERROR_ALREADY_ACTIVE,
   rideResponseSchema,
   rideStatusSchema,
   transitionRideDtoSchema
@@ -81,5 +84,49 @@ describe("rides schemas", () => {
       reason: "x".repeat(501)
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("quoteRequestSchema", () => {
+  it("accepts valid pickup + destination lat/lng", () => {
+    const parsed = quoteRequestSchema.parse({
+      pickup: { lat: 10.7769, lng: 106.7009 },
+      destination: { lat: 10.8231, lng: 106.6297 }
+    });
+    expect(parsed.pickup.lat).toBeCloseTo(10.7769);
+  });
+
+  it("rejects out-of-range lat", () => {
+    expect(() =>
+      quoteRequestSchema.parse({
+        pickup: { lat: 91, lng: 0 },
+        destination: { lat: 0, lng: 0 }
+      })
+    ).toThrow();
+  });
+});
+
+describe("quoteResponseSchema", () => {
+  it("validates full breakdown", () => {
+    const parsed = quoteResponseSchema.parse({
+      distanceMeters: 12500,
+      durationSeconds: 1500,
+      baseFareVnd: 12000,
+      perKmVnd: 5000,
+      perMinVnd: 500,
+      surgeMultiplier: 1.2,
+      totalVnd: 105000,
+      currency: "VND",
+      routeConfidence: "high",
+      estimatedAt: "2026-05-23T05:00:00.000Z",
+      expiresInSeconds: 60
+    });
+    expect(parsed.totalVnd).toBe(105000);
+  });
+});
+
+describe("RIDE_ERROR_ALREADY_ACTIVE", () => {
+  it("is the canonical error code", () => {
+    expect(RIDE_ERROR_ALREADY_ACTIVE).toBe("RIDE_ALREADY_ACTIVE");
   });
 });
