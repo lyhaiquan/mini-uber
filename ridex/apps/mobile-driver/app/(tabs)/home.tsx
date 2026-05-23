@@ -8,6 +8,7 @@ import {
   type MapMarkerData
 } from "@ridex/ui-mobile";
 import * as Linking from "expo-linking";
+import { useRouter } from "expo-router";
 import * as React from "react";
 import {
   Alert,
@@ -17,9 +18,12 @@ import {
   type AppStateStatus
 } from "react-native";
 
+import { OfferScreen } from "../../src/components/driver/offer-screen";
 import { OnlineToggle } from "../../src/components/driver/online-toggle";
 import { PermissionBanner } from "../../src/components/driver/permission-banner";
 import { StatusPill } from "../../src/components/driver/status-pill";
+import { useDriverActiveRide } from "../../src/hooks/use-active-ride";
+import { useDriverOffer } from "../../src/hooks/use-driver-offer";
 import {
   useDriverAvailability,
   useGoOffline,
@@ -35,6 +39,47 @@ export default function HomeTab() {
   const goOnline = useGoOnline();
   const goOffline = useGoOffline();
   const isOnline = availability.data?.isOnline ?? false;
+  const router = useRouter();
+
+  // Restore the in-ride screen on cold start / reload: the backend tells us
+  // which ride (if any) is currently assigned, and we jump straight to it
+  // so the driver isn't asked to navigate manually.
+  const activeRide = useDriverActiveRide();
+  React.useEffect(() => {
+    const ride = activeRide.data;
+    if (ride !== null && ride !== undefined) {
+      router.replace(`/ride/${ride.id}` as never);
+    }
+  }, [activeRide.data, router]);
+
+  const offerCtl = useDriverOffer({
+    enabled: isOnline && activeRide.data === null
+  });
+  const [offerPending, setOfferPending] = React.useState(false);
+
+  const onAcceptOffer = async () => {
+    if (offerCtl.offer === null) return;
+    setOfferPending(true);
+    const ack = await offerCtl.accept(offerCtl.offer.offerId);
+    setOfferPending(false);
+    if (ack.ok) {
+      router.push(`/ride/${offerCtl.offer.rideId}` as never);
+    } else {
+      Alert.alert(
+        "Không nhận được chuyến",
+        ack.error.code === "ALREADY_FINALIZED"
+          ? "Chuyến đã được nhận hoặc đã hết hạn."
+          : "Mạng chậm, vui lòng thử lại."
+      );
+    }
+  };
+
+  const onRejectOffer = async () => {
+    if (offerCtl.offer === null) return;
+    setOfferPending(true);
+    await offerCtl.reject(offerCtl.offer.offerId);
+    setOfferPending(false);
+  };
 
   const stream = useLocationStream({
     enabled: isOnline,
@@ -157,6 +202,15 @@ export default function HomeTab() {
       <View style={styles.mapWrap}>
         <DriverMap mapboxToken={mapboxToken} />
       </View>
+
+      <OfferScreen
+        offer={offerCtl.offer}
+        pending={offerPending}
+        estimatedPayoutVnd={null}
+        onAccept={() => void onAcceptOffer()}
+        onReject={() => void onRejectOffer()}
+        onTimeout={() => offerCtl.clear()}
+      />
     </Screen>
   );
 }
