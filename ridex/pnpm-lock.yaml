@@ -456,6 +456,9 @@ importers:
       '@ridex/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      '@ridex/socket-client':
+        specifier: workspace:*
+        version: link:../../packages/socket-client
       '@ridex/ui-tokens':
         specifier: workspace:*
         version: link:../../packages/ui-tokens

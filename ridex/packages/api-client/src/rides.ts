@@ -2,6 +2,7 @@ import {
   createRideDtoSchema,
   quoteRequestSchema,
   quoteResponseSchema,
+  rideDetailResponseSchema,
   rideResponseSchema,
   transitionRideDtoSchema,
   type CreateRideDto,
@@ -40,6 +41,14 @@ export function createRidesApi(client: ApiClient) {
         method: "GET",
         path: "/rides/active",
         schema: activeRideEnvelopeSchema
+      });
+    },
+
+    getRide(rideId: string) {
+      return client.request({
+        method: "GET",
+        path: `/rides/${encodeURIComponent(rideId)}`,
+        schema: enveloped(rideDetailResponseSchema)
       });
     },
 

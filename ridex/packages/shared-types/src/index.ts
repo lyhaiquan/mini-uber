@@ -5,3 +5,4 @@ export * from "./drivers";
 export * from "./payments";
 export * from "./admin";
 export * from "./events";
+export * from "./polyline";

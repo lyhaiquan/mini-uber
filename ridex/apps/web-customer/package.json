@@ -16,6 +16,7 @@
   "dependencies": {
     "@ridex/api-client": "workspace:*",
     "@ridex/shared-types": "workspace:*",
+    "@ridex/socket-client": "workspace:*",
     "@ridex/ui-tokens": "workspace:*",
     "@ridex/ui-web": "workspace:*",
     "@tanstack/react-query": "^5.62.16",

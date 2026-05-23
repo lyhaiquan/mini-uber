@@ -97,3 +97,28 @@ export const quoteResponseSchema = z.object({
 export type QuoteResponse = z.infer<typeof quoteResponseSchema>;
 
 export const RIDE_ERROR_ALREADY_ACTIVE = "RIDE_ALREADY_ACTIVE" as const;
+
+export const driverSummarySchema = z.object({
+  id: z.string().uuid(),
+  maskedEmail: z.string().min(1)
+});
+export type DriverSummary = z.infer<typeof driverSummarySchema>;
+
+export const pricingSummarySchema = z.object({
+  currency: z.literal("VND"),
+  totalVnd: z.number().int().min(0),
+  distanceMeters: z.number().int().min(0),
+  durationSeconds: z.number().int().min(0),
+  surgeMultiplier: z.number().min(1),
+  baseFareVnd: z.number().int().min(0),
+  surgeAmountVnd: z.number().int().min(0),
+  routePolyline: z.string().nullable(),
+  routePolylineFormat: z.literal("polyline5").nullable()
+});
+export type PricingSummary = z.infer<typeof pricingSummarySchema>;
+
+export const rideDetailResponseSchema = rideResponseSchema.extend({
+  driver: driverSummarySchema.nullable(),
+  pricing: pricingSummarySchema.nullable()
+});
+export type RideDetailResponse = z.infer<typeof rideDetailResponseSchema>;
