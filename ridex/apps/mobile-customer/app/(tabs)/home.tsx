@@ -1,4 +1,5 @@
 import {
+  Button,
   LocationSearch,
   MapView,
   SAIGON_FALLBACK,
@@ -9,33 +10,41 @@ import {
   type LatLng,
   type MapMarkerData
 } from "@ridex/ui-mobile";
-import Constants from "expo-constants";
+import * as Linking from "expo-linking";
 import * as React from "react";
-import { Linking, Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-const MAPBOX_TOKEN = (Constants.expoConfig?.extra?.mapboxToken as string | undefined) ?? "";
+import { env } from "../../src/lib/env";
 
 export default function HomeTab() {
   const permission = useLocationPermission();
-  const { coords, isFallback } = useCurrentLocation();
-  const [pickup, setPickup] = React.useState<LatLng | null>(null);
-  const [destination, setDestination] = React.useState<LatLng | null>(null);
+  const mapboxToken = env.mapboxToken ?? "";
 
-  const markers = React.useMemo<MapMarkerData[]>(() => {
-    const out: MapMarkerData[] = [];
-    if (pickup) out.push({ id: "pickup", coord: pickup, variant: "pickup" });
-    if (destination)
-      out.push({ id: "destination", coord: destination, variant: "destination" });
-    return out;
-  }, [pickup, destination]);
-
-  if (!MAPBOX_TOKEN) {
+  if (!mapboxToken) {
     return (
       <Screen>
         <Text variant="h2">Cần Mapbox token</Text>
         <Text variant="body">
           Đặt <Text variant="body">extra.mapboxToken</Text> trong app.json để bật map.
         </Text>
+      </Screen>
+    );
+  }
+
+  if (permission.isLoading || permission.status === "undetermined") {
+    return (
+      <Screen>
+        <Text variant="h2">Bản đồ RideX</Text>
+        <Text variant="body">Cần quyền vị trí để hiển thị xe gần bạn.</Text>
+        <Button
+          className="mt-3 self-start"
+          loading={permission.isLoading}
+          onPress={() => {
+            void permission.request();
+          }}
+        >
+          Cho phép vị trí
+        </Button>
       </Screen>
     );
   }
@@ -47,20 +56,34 @@ export default function HomeTab() {
         <Text variant="body">
           RideX cần quyền vị trí để tìm tài xế. Mở cài đặt để cấp quyền.
         </Text>
-        <Pressable onPress={() => Linking.openSettings()} style={styles.cta}>
-          <Text variant="body" style={{ color: "white" }}>
-            Mở cài đặt
-          </Text>
-        </Pressable>
+        <Button className="mt-3 self-start" onPress={() => void Linking.openSettings()}>
+          Mở cài đặt
+        </Button>
       </Screen>
     );
   }
+
+  return <CustomerMap mapboxToken={mapboxToken} />;
+}
+
+function CustomerMap({ mapboxToken }: { mapboxToken: string }) {
+  const { coords, isFallback } = useCurrentLocation({ autoRequest: false });
+  const [pickup, setPickup] = React.useState<LatLng | null>(null);
+  const [destination, setDestination] = React.useState<LatLng | null>(null);
+
+  const markers = React.useMemo<MapMarkerData[]>(() => {
+    const out: MapMarkerData[] = [];
+    if (pickup) out.push({ id: "pickup", coord: pickup, variant: "pickup" });
+    if (destination)
+      out.push({ id: "destination", coord: destination, variant: "destination" });
+    return out;
+  }, [pickup, destination]);
 
   return (
     <View style={styles.container}>
       <View style={styles.searchOverlay}>
         <LocationSearch
-          token={MAPBOX_TOKEN}
+          token={mapboxToken}
           placeholder="Tìm điểm đón hoặc điểm đến..."
           onSelect={(r) => {
             if (!pickup) setPickup(r.coord);
@@ -74,7 +97,7 @@ export default function HomeTab() {
         ) : null}
       </View>
       <MapView
-        token={MAPBOX_TOKEN}
+        token={mapboxToken}
         initialCenter={coords ?? SAIGON_FALLBACK}
         markers={markers}
         onMapClick={(point) => {
@@ -96,13 +119,5 @@ const styles = StyleSheet.create({
     right: 12,
     zIndex: 10
   },
-  map: { flex: 1 },
-  cta: {
-    marginTop: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: "#0a84ff",
-    borderRadius: 8,
-    alignSelf: "flex-start"
-  }
+  map: { flex: 1 }
 });
