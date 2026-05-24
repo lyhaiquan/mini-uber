@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "@ridex/ui-web";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
@@ -22,26 +20,29 @@ export function AuthMenu(): React.ReactElement | null {
     return (
       <div className="flex items-center gap-2">
         <span className="hidden text-sm text-surface-700 dark:text-surface-300 sm:inline">
-          {user.email} · {user.role}
+          {user.email} Â· {user.role}
         </span>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
+          type="button"
+          className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium text-surface-900 transition-colors hover:bg-surface-100 dark:text-white dark:hover:bg-surface-800"
           onClick={async () => {
             await authActions.logout();
             clear();
             router.replace("/");
           }}
         >
-          Đăng xuất
-        </Button>
+          ÄÄƒng xuáº¥t
+        </button>
       </div>
     );
   }
 
   return (
-    <Button asChild size="sm">
-      <Link href="/login">Đăng nhập</Link>
-    </Button>
+    <a
+      href="/login"
+      className="inline-flex h-9 items-center justify-center rounded-md bg-primary-500 px-3 text-sm font-medium text-white transition-colors hover:bg-primary-600"
+    >
+      ÄÄƒng nháº­p
+    </a>
   );
 }

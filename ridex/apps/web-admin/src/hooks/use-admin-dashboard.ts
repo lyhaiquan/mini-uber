@@ -9,10 +9,13 @@ export const adminKeys = {
   dashboardSummary: () => [...adminKeys.all, "dashboard", "summary"] as const
 };
 
+export const ADMIN_DASHBOARD_REFETCH_INTERVAL_MS = 30_000;
+
 export function useAdminDashboardSummary() {
   return useQuery({
     queryKey: adminKeys.dashboardSummary(),
     queryFn: () => adminApi.getDashboardSummary(),
-    refetchInterval: 30_000
+    refetchInterval: ADMIN_DASHBOARD_REFETCH_INTERVAL_MS,
+    refetchOnWindowFocus: true
   });
 }

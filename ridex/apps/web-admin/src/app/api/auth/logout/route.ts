@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { clearRefreshCookie, REFRESH_COOKIE_NAME } from "@/lib/auth-cookie";
+import { clearRefreshCookie, clearRoleCookie, REFRESH_COOKIE_NAME } from "@/lib/auth-cookie";
 import { callBackend } from "@/lib/auth-proxy";
 
 export async function POST(): Promise<Response> {
@@ -17,5 +17,6 @@ export async function POST(): Promise<Response> {
   }
 
   clearRefreshCookie(cookieJar);
+  clearRoleCookie(cookieJar);
   return NextResponse.json({ ok: true });
 }

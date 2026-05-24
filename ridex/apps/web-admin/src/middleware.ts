@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { REFRESH_COOKIE_NAME } from "@/lib/auth-cookie";
+import { REFRESH_COOKIE_NAME, ROLE_COOKIE_NAME } from "@/lib/auth-cookie";
 
 const PUBLIC_PREFIXES = ["/", "/login", "/403", "/api/auth", "/_next", "/favicon"];
 
@@ -12,17 +12,38 @@ function isPublic(pathname: string): boolean {
   );
 }
 
-export function middleware(req: NextRequest) {
-  if (isPublic(req.nextUrl.pathname)) {
-    return NextResponse.next();
+export function resolveAuthRedirect(
+  pathname: string,
+  refresh: string | undefined,
+  role: string | undefined
+): "/login" | "/403" | null {
+  if (isPublic(pathname)) {
+    return null;
   }
-  const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
   if (!refresh) {
+    return "/login";
+  }
+  // Role-aware guard: when we know the role from the httpOnly cookie and it
+  // isn't ADMIN, block before the app shell renders. If the role cookie is
+  // missing (older session), let the client/bootstrap re-validate normally.
+  if (role !== undefined && role !== "ADMIN") {
+    return "/403";
+  }
+  return null;
+}
+
+export function middleware(req: NextRequest) {
+  const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
+  const role = req.cookies.get(ROLE_COOKIE_NAME)?.value;
+  const redirectPath = resolveAuthRedirect(req.nextUrl.pathname, refresh, role);
+
+  if (redirectPath !== null) {
     const url = req.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = redirectPath;
     url.search = "";
     return NextResponse.redirect(url);
   }
+
   return NextResponse.next();
 }
 

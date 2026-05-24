@@ -1,7 +1,13 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { clearRefreshCookie, REFRESH_COOKIE_NAME, setRefreshCookie } from "@/lib/auth-cookie";
+import {
+  clearRefreshCookie,
+  clearRoleCookie,
+  REFRESH_COOKIE_NAME,
+  setRefreshCookie,
+  setRoleCookie
+} from "@/lib/auth-cookie";
 import {
   type BackendErrorBody,
   authTokensResponseSchema,
@@ -27,6 +33,7 @@ export async function POST(): Promise<Response> {
     // Transient backend errors (5xx, timeouts, 502) must NOT log the user out.
     if (backend.status === 401 || backend.status === 403) {
       clearRefreshCookie(cookieJar);
+      clearRoleCookie(cookieJar);
     }
     return NextResponse.json(
       { message: flattenBackendError(backend.json as BackendErrorBody | null) },
@@ -42,6 +49,7 @@ export async function POST(): Promise<Response> {
   }
 
   setRefreshCookie(cookieJar, tokens.data.refreshToken);
+  setRoleCookie(cookieJar, tokens.data.user.role);
 
   return NextResponse.json({
     accessToken: tokens.data.accessToken,

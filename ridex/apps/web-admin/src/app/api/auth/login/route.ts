@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { setRefreshCookie } from "@/lib/auth-cookie";
+import { setRefreshCookie, setRoleCookie } from "@/lib/auth-cookie";
 import {
   type BackendErrorBody,
   authTokensResponseSchema,
@@ -43,6 +43,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const cookieJar = await cookies();
   setRefreshCookie(cookieJar, tokens.data.refreshToken);
+  setRoleCookie(cookieJar, tokens.data.user.role);
 
   return NextResponse.json({
     accessToken: tokens.data.accessToken,

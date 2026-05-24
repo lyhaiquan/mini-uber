@@ -1,6 +1,8 @@
+import type { User } from "@ridex/shared-types";
 import type { ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies";
 
 export const REFRESH_COOKIE_NAME = "ridex_refresh";
+export const ROLE_COOKIE_NAME = "ridex_role";
 
 export const REFRESH_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 
@@ -14,8 +16,28 @@ export function setRefreshCookie(cookies: ResponseCookies, token: string): void 
   });
 }
 
+export function setRoleCookie(cookies: ResponseCookies, role: User["role"]): void {
+  cookies.set(ROLE_COOKIE_NAME, role, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: REFRESH_COOKIE_MAX_AGE_SECONDS
+  });
+}
+
 export function clearRefreshCookie(cookies: ResponseCookies): void {
   cookies.set(REFRESH_COOKIE_NAME, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0
+  });
+}
+
+export function clearRoleCookie(cookies: ResponseCookies): void {
+  cookies.set(ROLE_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
