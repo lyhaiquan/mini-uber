@@ -21,6 +21,9 @@ export function AuthMenu(): React.ReactElement | null {
   if (status === "authenticated" && user) {
     return (
       <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/wallet">Ví</Link>
+        </Button>
         <span className="hidden text-sm text-surface-700 dark:text-surface-300 sm:inline">
           {user.email}
         </span>

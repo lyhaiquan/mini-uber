@@ -2,6 +2,7 @@ import {
   ApiClient,
   createAuthApi,
   createDriversApi,
+  createPaymentsApi,
   createRidesApi,
   type ApiClientConfig
 } from "@ridex/api-client";
@@ -51,3 +52,4 @@ export const apiClient = new ApiClient(config);
 export const authApi = createAuthApi(apiClient);
 export const ridesApi = createRidesApi(apiClient);
 export const driversApi = createDriversApi(apiClient);
+export const paymentsApi = createPaymentsApi(apiClient);

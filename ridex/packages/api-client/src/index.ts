@@ -5,4 +5,5 @@ export { createAuthApi } from "./auth";
 export { createRidesApi } from "./rides";
 export { createDriversApi } from "./drivers";
 export { createAdminApi } from "./admin";
+export { createPaymentsApi } from "./payments";
 export { emptyResponseSchema, enveloped, okResponseSchema } from "./schemas";

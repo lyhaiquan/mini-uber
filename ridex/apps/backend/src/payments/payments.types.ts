@@ -72,3 +72,33 @@ export interface PaymentPricingSnapshot {
   id: string;
   totalVnd: number;
 }
+
+export interface PaymentHistoryRow {
+  id: string;
+  rideId: string;
+  totalVnd: number;
+  driverShareVnd: number;
+  status: PaymentStatus;
+  createdAt: string;
+  completedAt: string | null;
+  failureReason: string | null;
+  pickupAddress: string;
+  destinationAddress: string;
+}
+
+export interface PaymentHistoryResult {
+  items: PaymentHistoryRow[];
+  total: number;
+}
+
+export interface DriverEarningsByDayRow {
+  date: string;
+  earningsVnd: number;
+  trips: number;
+}
+
+export interface DriverEarningsAggregate {
+  tripsCompleted: number;
+  totalEarningsVnd: number;
+  byDay: DriverEarningsByDayRow[];
+}

@@ -38,6 +38,39 @@ describe("PaymentsFacade", () => {
     });
     expect(walletRepository.getWalletForUser).toHaveBeenCalledWith("user-1", WalletKind.CUSTOMER);
   });
+
+  it("delegates payment history lookup to repository", async () => {
+    const { facade, paymentRepository } = createFacade();
+    paymentRepository.getPaymentHistoryForUser.mockResolvedValue({ items: [], total: 0 });
+
+    await expect(
+      facade.getPaymentHistoryForUser("CUSTOMER", "user-1", 1, 20)
+    ).resolves.toEqual({ items: [], total: 0 });
+    expect(paymentRepository.getPaymentHistoryForUser).toHaveBeenCalledWith(
+      "CUSTOMER",
+      "user-1",
+      1,
+      20
+    );
+  });
+
+  it("delegates driver earnings lookup to repository", async () => {
+    const { facade, paymentRepository } = createFacade();
+    const from = new Date("2026-05-11T00:00:00.000Z");
+    const to = new Date("2026-05-18T00:00:00.000Z");
+    paymentRepository.aggregateDriverEarnings.mockResolvedValue({
+      tripsCompleted: 4,
+      totalEarningsVnd: 280_000,
+      byDay: []
+    });
+
+    await expect(facade.getDriverEarnings("driver-1", from, to)).resolves.toEqual({
+      tripsCompleted: 4,
+      totalEarningsVnd: 280_000,
+      byDay: []
+    });
+    expect(paymentRepository.aggregateDriverEarnings).toHaveBeenCalledWith("driver-1", from, to);
+  });
 });
 
 function createFacade(): {
@@ -47,7 +80,9 @@ function createFacade(): {
 } {
   const paymentRepository = {
     findByRideId: jest.fn(),
-    aggregateDashboardStats: jest.fn()
+    aggregateDashboardStats: jest.fn(),
+    getPaymentHistoryForUser: jest.fn(),
+    aggregateDriverEarnings: jest.fn()
   } as unknown as jest.Mocked<PaymentRepository>;
   const walletRepository = {
     getWalletForUser: jest.fn()

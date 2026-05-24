@@ -4,6 +4,7 @@ import {
   ApiClient,
   createAdminApi,
   createDriversApi,
+  createPaymentsApi,
   createRidesApi
 } from "@ridex/api-client";
 import { userSchema } from "@ridex/shared-types";
@@ -52,4 +53,5 @@ export const apiClient = new ApiClient({
 export const ridesApi = createRidesApi(apiClient);
 export const driversApi = createDriversApi(apiClient);
 export const adminApi = createAdminApi(apiClient);
+export const paymentsApi = createPaymentsApi(apiClient);
 export { clientAuthResponseSchema };

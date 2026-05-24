@@ -13,10 +13,12 @@ import { RideCompletedPaymentListener } from "./listeners/ride-completed.payment
 import { UserCreatedWalletSeeder } from "./listeners/user-created.wallet-seeder";
 import { PaymentRepository } from "./payment/payment.repository";
 import { PaymentsFacade } from "./payments.facade";
+import { PaymentsMeController } from "./payments.me.controller";
 import { WalletRepository } from "./wallet/wallet.repository";
 
 @Module({
   imports: [TypeOrmModule.forFeature([Wallet, Payment, LedgerEntry]), RidesModule, PricingModule],
+  controllers: [PaymentsMeController],
   providers: [
     FareSplitService,
     PaymentProcessorService,

@@ -2,9 +2,16 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { EntityManager, Repository } from "typeorm";
 
+import { Ride } from "../../rides/entities/ride.entity";
 import { Payment } from "../entities/payment.entity";
 import { PaymentStatus } from "../enums/payment-status.enum";
 import type { InsertPaymentInput } from "../payments.types";
+import type {
+  DriverEarningsAggregate,
+  DriverEarningsByDayRow,
+  PaymentHistoryResult,
+  PaymentHistoryRow
+} from "../payments.types";
 
 export interface PaymentDashboardStats {
   successCountLast24h: number;
@@ -21,6 +28,15 @@ interface StatusAggregateRow {
 
 interface RevenueRow {
   revenue: string | null;
+}
+
+interface CountRow {
+  count: string;
+}
+
+interface EarningsTotalRow {
+  trips: string;
+  earnings: string;
 }
 
 @Injectable()
@@ -118,6 +134,97 @@ export class PaymentRepository {
       failureCountLast24h: failureCount,
       platformRevenueLast24hVnd: revenueWindow,
       platformRevenueAllTimeVnd: Number(allTimeRow?.revenue ?? "0")
+    };
+  }
+
+  async getPaymentHistoryForUser(
+    role: "CUSTOMER" | "DRIVER",
+    userId: string,
+    page: number,
+    pageSize: number
+  ): Promise<PaymentHistoryResult> {
+    const offset = (page - 1) * pageSize;
+    const ownerColumn =
+      role === "CUSTOMER" ? "payment.customer_user_id" : "payment.driver_user_id";
+
+    const items = (await this.repository
+      .createQueryBuilder("payment")
+      .innerJoin(Ride, "ride", "ride.id = payment.ride_id")
+      .select("payment.id", "id")
+      .addSelect("payment.ride_id", "rideId")
+      .addSelect("payment.total_vnd::text", "totalVnd")
+      .addSelect("payment.driver_share_vnd::text", "driverShareVnd")
+      .addSelect("payment.status", "status")
+      .addSelect("payment.created_at", "createdAt")
+      .addSelect("payment.completed_at", "completedAt")
+      .addSelect("payment.failure_reason", "failureReason")
+      .addSelect("ride.pickup_address", "pickupAddress")
+      .addSelect("ride.destination_address", "destinationAddress")
+      .where(`${ownerColumn} = :userId`, { userId })
+      .orderBy("payment.created_at", "DESC")
+      .offset(offset)
+      .limit(pageSize)
+      .getRawMany()) as Array<
+      Omit<PaymentHistoryRow, "totalVnd" | "driverShareVnd"> & {
+        totalVnd: string;
+        driverShareVnd: string;
+      }
+    >;
+
+    const totalRow = (await this.repository
+      .createQueryBuilder("payment")
+      .select("COUNT(*)::text", "count")
+      .where(`${ownerColumn} = :userId`, { userId })
+      .getRawOne()) as CountRow | undefined;
+
+    return {
+      items: items.map((item) => ({
+        ...item,
+        totalVnd: Number(item.totalVnd),
+        driverShareVnd: Number(item.driverShareVnd)
+      })),
+      total: Number(totalRow?.count ?? "0")
+    };
+  }
+
+  async aggregateDriverEarnings(
+    driverUserId: string,
+    from: Date,
+    to: Date
+  ): Promise<DriverEarningsAggregate> {
+    const totals = (await this.repository
+      .createQueryBuilder("payment")
+      .select("COUNT(*)::text", "trips")
+      .addSelect("COALESCE(SUM(payment.driver_share_vnd), 0)::text", "earnings")
+      .where("payment.driver_user_id = :driverUserId", { driverUserId })
+      .andWhere("payment.status = :status", { status: PaymentStatus.SUCCEEDED })
+      .andWhere("payment.created_at >= :from", { from })
+      .andWhere("payment.created_at < :to", { to })
+      .getRawOne()) as EarningsTotalRow | undefined;
+
+    const byDayRows = (await this.repository
+      .createQueryBuilder("payment")
+      .select("TO_CHAR(DATE_TRUNC('day', payment.created_at), 'YYYY-MM-DD')", "date")
+      .addSelect("COALESCE(SUM(payment.driver_share_vnd), 0)::text", "earningsVnd")
+      .addSelect("COUNT(*)::text", "trips")
+      .where("payment.driver_user_id = :driverUserId", { driverUserId })
+      .andWhere("payment.status = :status", { status: PaymentStatus.SUCCEEDED })
+      .andWhere("payment.created_at >= :from", { from })
+      .andWhere("payment.created_at < :to", { to })
+      .groupBy("DATE_TRUNC('day', payment.created_at)")
+      .orderBy("DATE_TRUNC('day', payment.created_at)", "ASC")
+      .getRawMany()) as Array<{ date: string; earningsVnd: string; trips: string }>;
+
+    return {
+      tripsCompleted: Number(totals?.trips ?? "0"),
+      totalEarningsVnd: Number(totals?.earnings ?? "0"),
+      byDay: byDayRows.map(
+        (row): DriverEarningsByDayRow => ({
+          date: row.date,
+          earningsVnd: Number(row.earningsVnd),
+          trips: Number(row.trips)
+        })
+      )
     };
   }
 
