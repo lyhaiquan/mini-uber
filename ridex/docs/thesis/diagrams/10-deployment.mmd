@@ -1,0 +1,38 @@
+%% Deployment diagram (Docker Compose)
+flowchart LR
+    subgraph DEV["Developer Machine"]
+        IDE[VS Code / Cursor]
+        EXPO[Expo Dev Client<br/>Android Emulator]
+    end
+
+    subgraph DOCKER["docker-compose.yml"]
+        BACKEND[backend<br/>node:20-alpine<br/>NestJS :3000]
+        PG[postgres:16<br/>:5432]
+        REDIS[redis:7-alpine<br/>:6379]
+        OSRM[osrm-backend<br/>:5000<br/>map: vietnam-latest.osm]
+    end
+
+    subgraph WEB["Web Surfaces (pnpm dev)"]
+        WC[web-customer :3001]
+        WD[web-driver :3002]
+        WA[web-admin :3003]
+    end
+
+    subgraph CLOUD["Cloud (production-ready)"]
+        VPS[VPS / EC2]
+        CDN[Cloudflare / CDN]
+        MAPBOX[Mapbox tile service]
+    end
+
+    IDE --> BACKEND
+    IDE --> WEB
+    EXPO --> BACKEND
+    WEB --> BACKEND
+    BACKEND --> PG
+    BACKEND --> REDIS
+    BACKEND --> OSRM
+    EXPO -.-> MAPBOX
+    WEB -.-> MAPBOX
+
+    BACKEND -.->|deploy| VPS
+    WEB -.->|deploy| CDN

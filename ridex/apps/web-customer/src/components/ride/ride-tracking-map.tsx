@@ -1,7 +1,7 @@
 "use client";
 
-import { MapView, type MapMarkerData } from "@ridex/ui-web";
 import { decodePolyline5, type RideDetailResponse } from "@ridex/shared-types";
+import { MapView, type MapMarkerData } from "@ridex/ui-web";
 import * as React from "react";
 
 import type { DriverPosition } from "@/hooks/use-ride";

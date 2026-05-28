@@ -1,0 +1,47 @@
+%% Sequence: In-ride realtime tracking + state transitions
+sequenceDiagram
+    autonumber
+    actor C as Khách hàng
+    actor D as Tài xế
+    participant WS as Socket.IO Gateway
+    participant L as LocationService
+    participant R as RidesService
+    participant DB as PostgreSQL
+    participant EB as EventBus
+
+    Note over D: Sau khi accept offer<br/>(ride=MATCHED)
+
+    C->>WS: subscribe ride:{rideId}<br/>(JWT + ownership check)
+    WS-->>C: subscribed
+
+    loop Mỗi 3-5 giây
+        D->>WS: emit driver.location.update<br/>{lat, lng}
+        WS->>L: acceptLocation(driverId, lat, lng)
+        L->>L: validate speed/jump
+        L->>REDIS: SET h3 index +<br/>cache last location
+        L->>EB: emit driver.location-updated
+        EB->>WS: forward tới room ride:{rideId}
+        WS-->>C: ride.driver-location
+    end
+
+    D->>WS: ride.transition Arrived
+    WS->>R: transition(rideId, ARRIVED)
+    R->>R: validate transition map
+    R->>DB: UPDATE ride status
+    R->>EB: emit ride.status-changed
+    EB->>WS: broadcast room
+    WS-->>C: ride.status-changed ARRIVED
+
+    D->>WS: ride.transition Start
+    WS->>R: transition(rideId, IN_RIDE)
+    R->>DB: UPDATE
+    R->>EB: emit
+    WS-->>C: ride.status-changed IN_RIDE
+
+    D->>WS: ride.transition Complete
+    WS->>R: transition(rideId, COMPLETED)
+    R->>DB: UPDATE ride.completed_at
+    R->>EB: emit ride.completed
+    WS-->>C: ride.status-changed COMPLETED
+
+    Note over EB: PaymentService<br/>lắng nghe ride.completed<br/>(xem sequence 09)

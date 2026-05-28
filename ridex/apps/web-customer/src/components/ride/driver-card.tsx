@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardContent } from "@ridex/ui-web";
 import type { DriverSummary } from "@ridex/shared-types";
+import { Card, CardContent } from "@ridex/ui-web";
 
 export interface DriverCardProps {
   driver: DriverSummary | null;

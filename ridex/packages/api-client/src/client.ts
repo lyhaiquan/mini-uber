@@ -108,7 +108,7 @@ export class ApiClient {
         method: opts.method,
         headers,
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
-        signal: controller.signal,
+        signal: controller.signal as unknown as RequestInit["signal"],
         credentials: this.config.credentials
       });
     } finally {

@@ -1,0 +1,28 @@
+%% State machine của Ride
+stateDiagram-v2
+    [*] --> REQUESTED : khách đặt xe<br/>POST /rides
+    REQUESTED --> MATCHED : matching tìm được<br/>tài xế và<br/>tài xế chấp nhận
+    REQUESTED --> CANCELLED : khách hủy<br/>(trước matching)
+    REQUESTED --> FAILED : không có<br/>tài xế available<br/>sau N round
+
+    MATCHED --> ARRIVED : tài xế tới<br/>điểm đón
+    MATCHED --> CANCELLED : khách/tài xế<br/>hủy
+    MATCHED --> FAILED : timeout
+
+    ARRIVED --> IN_RIDE : tài xế bắt đầu<br/>chuyến (Start)
+    ARRIVED --> CANCELLED : khách không<br/>xuất hiện
+
+    IN_RIDE --> COMPLETED : tài xế nhấn<br/>Complete<br/>→ auto-charge
+
+    COMPLETED --> [*]
+    CANCELLED --> [*]
+    FAILED --> [*]
+
+    note right of COMPLETED
+        Trigger payment idempotent:
+        1. Lock pricing_snapshot
+        2. Trừ ví khách
+        3. Cộng 80% ví tài xế
+        4. Cộng 20% ví platform
+        5. Ghi ledger 2 chiều
+    end note

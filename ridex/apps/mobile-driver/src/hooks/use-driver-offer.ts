@@ -3,6 +3,7 @@ import {
   rejectOffer,
   RIDE_OFFER_CANCELLED_EVENT,
   RIDE_OFFER_RECEIVED_EVENT,
+  withAckTimeout,
   type OfferAck,
   type OfferCancelledPayload,
   type OfferReceivedPayload
@@ -50,7 +51,13 @@ export function useDriverOffer(opts: { enabled: boolean }): UseDriverOfferResult
   });
 
   React.useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      // Mirror the web hook: drop offer + polled cache when disabled so a
+      // stale OfferScreen can't outlive the online toggle / ride assignment.
+      setOffer(null);
+      void qc.invalidateQueries({ queryKey: offerKeys.current() });
+      return;
+    }
     const socket = getDriverSocket();
     if (!socket.connected) socket.connect();
 
@@ -74,7 +81,7 @@ export function useDriverOffer(opts: { enabled: boolean }): UseDriverOfferResult
 
   const accept = React.useCallback(async (offerId: string) => {
     const socket = getDriverSocket();
-    const ack = await withTimeout(acceptOffer(socket, offerId), 3_000);
+    const ack = await withAckTimeout(acceptOffer(socket, offerId), 3_000);
     if (ack.ok) {
       setOffer(null);
     }
@@ -83,7 +90,7 @@ export function useDriverOffer(opts: { enabled: boolean }): UseDriverOfferResult
 
   const reject = React.useCallback(async (offerId: string, reason?: string) => {
     const socket = getDriverSocket();
-    const ack = await withTimeout(rejectOffer(socket, offerId, reason), 3_000);
+    const ack = await withAckTimeout(rejectOffer(socket, offerId, reason), 3_000);
     setOffer(null);
     return ack;
   }, []);
@@ -91,16 +98,4 @@ export function useDriverOffer(opts: { enabled: boolean }): UseDriverOfferResult
   const clear = React.useCallback(() => setOffer(null), []);
 
   return { offer, accept, reject, clear };
-}
-
-function withTimeout(promise: Promise<OfferAck>, ms: number): Promise<OfferAck> {
-  return Promise.race<OfferAck>([
-    promise,
-    new Promise<OfferAck>((resolve) =>
-      setTimeout(
-        () => resolve({ ok: false, error: { code: "ALREADY_FINALIZED" } }),
-        ms
-      )
-    )
-  ]);
 }

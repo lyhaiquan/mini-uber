@@ -1,0 +1,17 @@
+%% State machine của Payment
+stateDiagram-v2
+    [*] --> PENDING : ride.completed event<br/>tạo Payment row<br/>với idempotency_key
+
+    PENDING --> SUCCEEDED : transaction OK<br/>ledger ghi đủ 4 entry
+    PENDING --> FAILED_INSUFFICIENT_BALANCE : ví khách<br/>< total_vnd
+    PENDING --> FAILED_MISSING_SNAPSHOT : pricing snapshot<br/>không tồn tại
+
+    SUCCEEDED --> [*] : emit<br/>payment.succeeded
+    FAILED_INSUFFICIENT_BALANCE --> [*] : alert admin
+    FAILED_MISSING_SNAPSHOT --> [*] : data integrity<br/>incident
+
+    note right of PENDING
+        Cùng idempotency_key
+        → trả về payment cũ
+        → KHÔNG charge lại
+    end note

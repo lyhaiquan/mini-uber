@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@ridex/ui-web";
 import type { RideStatus } from "@ridex/shared-types";
+import { Button } from "@ridex/ui-web";
 import * as React from "react";
 
 void React;

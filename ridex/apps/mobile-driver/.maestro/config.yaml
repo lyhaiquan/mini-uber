@@ -1,0 +1,7 @@
+appId: com.ridex.driver
+env:
+  API_BASE_URL: http://10.0.2.2:3000/api/v1
+  SEED_PICKUP_LAT: "10.77"
+  SEED_PICKUP_LNG: "106.70"
+  SEED_DEST_LAT: "10.78"
+  SEED_DEST_LNG: "106.71"

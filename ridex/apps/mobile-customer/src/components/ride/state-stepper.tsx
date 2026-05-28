@@ -1,5 +1,5 @@
-import { Text } from "@ridex/ui-mobile";
 import type { RideStatus } from "@ridex/shared-types";
+import { Text } from "@ridex/ui-mobile";
 import * as React from "react";
 import { StyleSheet, View } from "react-native";
 

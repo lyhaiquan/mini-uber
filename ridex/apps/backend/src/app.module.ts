@@ -21,6 +21,7 @@ import { PaymentsModule } from "./payments/payments.module";
 import { PricingModule } from "./pricing/pricing.module";
 import { RoutingModule } from "./routing/routing.module";
 import { RidesModule } from "./rides/rides.module";
+import { TestingModule } from "./testing/testing.module";
 import { UsersModule } from "./users/users.module";
 
 @Module({
@@ -56,7 +57,8 @@ import { UsersModule } from "./users/users.module";
     PaymentsModule,
     RidesModule,
     AdminModule,
-    HealthModule
+    HealthModule,
+    ...(process.env.NODE_ENV !== "production" ? [TestingModule] : [])
   ]
 })
 export class AppModule implements NestModule {

@@ -1,0 +1,47 @@
+%% Sequence: Matching engine xử lý ride.requested
+sequenceDiagram
+    autonumber
+    participant EB as EventBus
+    participant M as MatchingService
+    participant G as GeoFacade<br/>(H3)
+    participant ROUTE as RoutingService<br/>(OSRM)
+    participant Q as BullMQ Queue
+    participant WS as OfferGateway<br/>(Socket.IO)
+    actor D as Tài xế
+
+    EB->>M: ride.requested {rideId, pickup}
+    M->>G: discoverDrivers(pickup, ring=3)
+    G->>G: latLngToCell(pickup, res=9)<br/>+ gridDisk(ring)
+    G->>G: query Redis SET<br/>h3:cell:{cellId}
+    G-->>M: candidateIds[]
+    M->>ROUTE: estimateETA(driver→pickup) ×N
+    ROUTE-->>M: distances + ETAs
+    M->>M: score(distance, eta, weights)<br/>→ rank candidates
+
+    loop Mỗi candidate (tuần tự)
+        M->>DB: INSERT ride_offers (status=OFFERED)
+        M->>WS: emit ride.offer.received<br/>tới driver:{id}
+        WS-->>D: OfferModal hiển thị
+        M->>Q: enqueue offer.timeout (15s)
+
+        alt Driver accept trong 15s
+            D->>WS: emit ride.offer.accept(offerId)
+            WS->>M: handleAccept
+            M->>DB: UPDATE offer ACCEPTED<br/>+ ride MATCHED + driver_id
+            M->>EB: emit ride.matched
+            M-->>D: ack {ok:true}
+        else Driver reject
+            D->>WS: emit ride.offer.reject
+            M->>DB: UPDATE offer REJECTED
+            Note over M: tiếp candidate kế tiếp
+        else Timeout 15s
+            Q->>M: timeout fired
+            M->>DB: UPDATE offer TIMED_OUT
+            Note over M: tiếp candidate kế tiếp
+        end
+    end
+
+    alt Hết candidate, không ai accept
+        M->>DB: UPDATE ride FAILED
+        M->>EB: emit ride.failed
+    end

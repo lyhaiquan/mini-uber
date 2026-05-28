@@ -25,15 +25,26 @@ export default function DriverRideScreen() {
   const ride = activeQuery.data ?? null;
   const matches = ride !== null && ride.id === rideId;
 
-  // Completion toast → bounce home. Once-per-ride so re-renders don't spam.
-  const completedShown = React.useRef(false);
+  const lastPricingRef = React.useRef<{ totalVnd: number } | null>(null);
   React.useEffect(() => {
-    if (ride === null) return;
-    if (ride.status !== "COMPLETED") return;
+    if (ride !== null && ride.pricing !== null) {
+      lastPricingRef.current = { totalVnd: ride.pricing.totalVnd };
+    }
+  }, [ride]);
+
+  const completedShown = React.useRef(false);
+  const [completing, setCompleting] = React.useState(false);
+  React.useEffect(() => {
+    const updated = transition.data;
+    if (updated === undefined) return;
+    if (updated.status !== "COMPLETED") return;
     if (completedShown.current) return;
+
     completedShown.current = true;
-    const payout =
-      ride.pricing !== null ? Math.round(ride.pricing.totalVnd * 0.8) : null;
+    setCompleting(true);
+
+    const pricing = lastPricingRef.current;
+    const payout = pricing !== null ? Math.round(pricing.totalVnd * 0.8) : null;
     Alert.alert(
       "Hoàn thành",
       payout !== null
@@ -41,7 +52,17 @@ export default function DriverRideScreen() {
         : "Chuyến đã hoàn thành.",
       [{ text: "Tiếp tục", onPress: () => router.replace("/(tabs)/home" as never) }]
     );
-  }, [ride, router]);
+  }, [transition.data, router]);
+
+  if (completing) {
+    return (
+      <Screen>
+        <Text variant="body" accessibilityLabel="driver-completing-state">
+          Đang hoàn tất chuyến...
+        </Text>
+      </Screen>
+    );
+  }
 
   if (activeQuery.isLoading) {
     return (
@@ -54,7 +75,9 @@ export default function DriverRideScreen() {
   if (ride === null || !matches) {
     return (
       <Screen>
-        <Text variant="body">Bạn đang không có chuyến nào.</Text>
+        <Text variant="body" accessibilityLabel="driver-empty-state">
+          Bạn đang không có chuyến nào.
+        </Text>
       </Screen>
     );
   }
@@ -62,7 +85,9 @@ export default function DriverRideScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text variant="h2">Chuyến hiện tại</Text>
+        <Text variant="h2" accessibilityLabel="driver-current-ride-screen">
+          Chuyến hiện tại
+        </Text>
         <InRideMap ride={ride} />
         <InRideCard
           ride={ride}

@@ -4,11 +4,11 @@ import { toast } from "@ridex/ui-web";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
-import { DriverMap } from "@/components/home/driver-map";
 import { EarningsStrip } from "@/components/driver/earnings-strip";
 import { OfferModal } from "@/components/driver/offer-modal";
 import { OnlineToggle } from "@/components/driver/online-toggle";
 import { StatusPill } from "@/components/driver/status-pill";
+import { DriverMap } from "@/components/home/driver-map";
 import { useDriverActiveRide } from "@/hooks/use-active-ride";
 import { useDriverOffer } from "@/hooks/use-driver-offer";
 import {

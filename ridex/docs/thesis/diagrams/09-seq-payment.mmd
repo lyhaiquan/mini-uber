@@ -1,0 +1,44 @@
+%% Sequence: Payment idempotent auto-charge
+sequenceDiagram
+    autonumber
+    participant EB as EventBus
+    participant P as PaymentProcessor
+    participant PR as PricingFacade
+    participant W as WalletRepo
+    participant L as LedgerRepo
+    participant DB as PostgreSQL
+    participant EB2 as EventBus (out)
+
+    EB->>P: ride.completed {rideId}
+    P->>P: idempotencyKey = "ride:{rideId}"
+    P->>DB: SELECT payment WHERE idempotency_key
+
+    alt Đã có payment cũ
+        DB-->>P: existing payment
+        P-->>EB: skip (idempotent)
+    else Chưa có
+        P->>PR: getSnapshot(rideId)
+
+        alt Snapshot không tồn tại
+            P->>DB: INSERT payment FAILED_MISSING_SNAPSHOT
+            P->>EB2: emit payment.failed
+        else Có snapshot
+            P->>DB: BEGIN transaction
+            P->>DB: INSERT payment PENDING
+            P->>W: SELECT customer wallet FOR UPDATE
+
+            alt Số dư < total_vnd
+                P->>DB: UPDATE payment FAILED_INSUFFICIENT_BALANCE
+                P->>DB: COMMIT
+                P->>EB2: emit payment.failed
+            else Đủ tiền
+                P->>W: customer.balance -= total_vnd
+                P->>W: driver.balance += 80%
+                P->>W: platform.balance += 20%
+                P->>L: INSERT 4 ledger entries<br/>(DEBIT customer, CREDIT driver,<br/>CREDIT platform, balanced)
+                P->>DB: UPDATE payment SUCCEEDED
+                P->>DB: COMMIT
+                P->>EB2: emit payment.succeeded
+            end
+        end
+    end

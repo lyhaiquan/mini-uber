@@ -1,0 +1,40 @@
+%% Module dependency — bounded context của NestJS
+flowchart TB
+    AUTH[auth]
+    USERS[users]
+    DRIVERS[drivers]
+    LOC[location]
+    GEO[geo]
+    ROUTING[routing]
+    MATCHING[matching]
+    PRICING[pricing]
+    RIDES[rides]
+    PAYMENTS[payments]
+    ADMIN[admin]
+
+    AUTH --> USERS
+    DRIVERS --> USERS
+    LOC --> DRIVERS
+    GEO --> LOC
+    PRICING --> ROUTING
+    MATCHING --> GEO
+    MATCHING --> ROUTING
+    MATCHING --> RIDES
+    RIDES --> USERS
+    RIDES --> DRIVERS
+    RIDES --> PRICING
+    PAYMENTS --> RIDES
+    PAYMENTS --> USERS
+    ADMIN --> RIDES
+    ADMIN --> DRIVERS
+    ADMIN --> PAYMENTS
+
+    classDef core fill:#fef3c7,stroke:#d97706
+    classDef domain fill:#dcfce7,stroke:#16a34a
+    classDef facade fill:#dbeafe,stroke:#2563eb
+    class AUTH,USERS core
+    class DRIVERS,LOC,GEO,ROUTING,PRICING,MATCHING,RIDES,PAYMENTS domain
+    class ADMIN facade
+
+    %% Note: mọi cross-module access đi qua Facade pattern
+    %% (vd. RIDES dùng PricingFacade, không gọi PricingService trực tiếp)

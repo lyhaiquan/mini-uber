@@ -233,7 +233,11 @@ export type OfferErrorCode =
   | "NOT_FOR_DRIVER"
   | "ALREADY_FINALIZED"
   | "OFFER_NOT_FOUND"
-  | "INVALID_PAYLOAD";
+  | "INVALID_PAYLOAD"
+  // Client-side only: ack didn't arrive within the timeout window. Not
+  // emitted by the backend — fabricated by the driver hook's withTimeout()
+  // so UI can distinguish "race lost" from "socket wedged / network slow".
+  | "TIMEOUT";
 
 export interface OfferErrorPayload {
   code: OfferErrorCode;
@@ -265,4 +269,20 @@ export function rejectOffer(
       resolve(ack);
     });
   });
+}
+
+// If the backend ack doesn't land within `ms`, fabricate a TIMEOUT ack so
+// the modal/screen doesn't stall forever. TIMEOUT is a client-only code —
+// the backend never emits it. UI distinguishes it from ALREADY_FINALIZED so
+// "race lost" and "network slow, retry" don't get conflated.
+export function withAckTimeout(
+  promise: Promise<OfferAck>,
+  ms: number
+): Promise<OfferAck> {
+  return Promise.race<OfferAck>([
+    promise,
+    new Promise<OfferAck>((resolve) =>
+      setTimeout(() => resolve({ ok: false, error: { code: "TIMEOUT" } }), ms)
+    )
+  ]);
 }

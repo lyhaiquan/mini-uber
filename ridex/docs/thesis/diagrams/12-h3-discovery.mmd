@@ -1,0 +1,26 @@
+%% Thuật toán H3 driver discovery
+flowchart TB
+    START([discoverDrivers<br/>pickup, ring=3]):::input
+    H3_9[latLngToCell pickup<br/>resolution=9<br/>~150m hex]
+    H3_8[latLngToCell pickup<br/>resolution=8<br/>~600m hex]
+
+    DISK_9[gridDisk r9, ring=3<br/>→ 37 cell]
+    DISK_8[gridDisk r8, ring=3<br/>→ 37 cell]
+
+    SCAN9["SMEMBERS<br/>h3:cell:r9-cellId<br/>cho từng cell"]
+    SCAN8["SMEMBERS<br/>h3:cell:r8-cellId<br/>cho từng cell"]
+
+    DEDUP[JS Set dedup<br/>driver IDs]
+    FILTER["Filter:<br/>- is_online=true<br/>- last_seen &lt; TTL"]
+    OUT([candidate driver IDs]):::output
+
+    START --> H3_9
+    START --> H3_8
+    H3_9 --> DISK_9 --> SCAN9
+    H3_8 --> DISK_8 --> SCAN8
+    SCAN9 --> DEDUP
+    SCAN8 --> DEDUP
+    DEDUP --> FILTER --> OUT
+
+    classDef input fill:#fef3c7,stroke:#d97706
+    classDef output fill:#dcfce7,stroke:#16a34a

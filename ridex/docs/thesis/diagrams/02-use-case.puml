@@ -1,0 +1,82 @@
+@startuml RideX Use Case
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Khách hàng" as Customer
+actor "Tài xế" as Driver
+actor "Quản trị viên" as Admin
+actor "Hệ thống matching" as System <<system>>
+
+rectangle "RideX Platform" {
+  package "Xác thực" {
+    usecase "Đăng ký tài khoản" as UC_Register
+    usecase "Đăng nhập / đăng xuất" as UC_Login
+    usecase "Làm mới token" as UC_Refresh
+  }
+
+  package "Khách hàng" {
+    usecase "Ước tính giá chuyến" as UC_Quote
+    usecase "Đặt xe" as UC_RequestRide
+    usecase "Theo dõi chuyến đang đi" as UC_TrackRide
+    usecase "Xem lịch sử chuyến" as UC_RideHistory
+    usecase "Xem ví & lịch sử thanh toán" as UC_Wallet
+  }
+
+  package "Tài xế" {
+    usecase "Bật/tắt trạng thái online" as UC_OnlineToggle
+    usecase "Stream vị trí GPS" as UC_LocationStream
+    usecase "Nhận chuyến được đề xuất" as UC_ReceiveOffer
+    usecase "Chấp nhận / từ chối" as UC_AcceptReject
+    usecase "Cập nhật trạng thái chuyến" as UC_RideTransition
+    usecase "Xem thu nhập" as UC_Earnings
+  }
+
+  package "Quản trị" {
+    usecase "Dashboard số liệu" as UC_Dashboard
+    usecase "Audit log truy cập" as UC_Audit
+  }
+
+  package "Hệ thống tự động" {
+    usecase "Tìm tài xế gần nhất (H3)" as UC_Discovery
+    usecase "Tính ETA & quãng đường (OSRM)" as UC_Routing
+    usecase "Tính giá có surge" as UC_PricingCalc
+    usecase "Gửi offer tuần tự" as UC_DispatchOffer
+    usecase "Trừ ví idempotent" as UC_AutoCharge
+  }
+}
+
+Customer --> UC_Register
+Customer --> UC_Login
+Customer --> UC_Quote
+Customer --> UC_RequestRide
+Customer --> UC_TrackRide
+Customer --> UC_RideHistory
+Customer --> UC_Wallet
+
+Driver --> UC_Login
+Driver --> UC_OnlineToggle
+Driver --> UC_LocationStream
+Driver --> UC_ReceiveOffer
+Driver --> UC_AcceptReject
+Driver --> UC_RideTransition
+Driver --> UC_Earnings
+
+Admin --> UC_Login
+Admin --> UC_Dashboard
+Admin --> UC_Audit
+
+System --> UC_Discovery
+System --> UC_Routing
+System --> UC_PricingCalc
+System --> UC_DispatchOffer
+System --> UC_AutoCharge
+
+UC_RequestRide ..> UC_Quote : <<include>>
+UC_RequestRide ..> UC_PricingCalc : <<include>>
+UC_RequestRide ..> UC_Discovery : <<include>>
+UC_RequestRide ..> UC_DispatchOffer : <<include>>
+UC_RideTransition ..> UC_AutoCharge : <<include>>\n(on COMPLETED)
+UC_Login ..> UC_Refresh : <<extend>>
+
+@enduml

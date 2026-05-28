@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Card, CardContent } from "@ridex/ui-web";
 import type { RideStatus } from "@ridex/shared-types";
+import { Button, Card, CardContent } from "@ridex/ui-web";
 
 import { StateMachineStepper } from "./state-machine-stepper";
 

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   acceptOffer,
@@ -7,7 +7,9 @@ import {
   RIDE_OFFER_CANCELLED_EVENT,
   RIDE_OFFER_ERROR_EVENT,
   RIDE_OFFER_RECEIVED_EVENT,
-  RIDE_OFFER_REJECT_EVENT
+  RIDE_OFFER_REJECT_EVENT,
+  withAckTimeout,
+  type OfferAck
 } from "../index";
 
 describe("offer wire constants", () => {
@@ -69,5 +71,49 @@ describe("rejectOffer", () => {
     } as never;
 
     await rejectOffer(socket, "offer-3", "too_far");
+  });
+});
+
+describe("withAckTimeout", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("resolves with the backend ack when it arrives before the timeout", async () => {
+    const slow = new Promise<OfferAck>((resolve) =>
+      setTimeout(() => resolve({ ok: true }), 50)
+    );
+    const wrapped = withAckTimeout(slow, 3_000);
+    await vi.advanceTimersByTimeAsync(50);
+    await expect(wrapped).resolves.toEqual({ ok: true });
+  });
+
+  it("fabricates a TIMEOUT ack (not ALREADY_FINALIZED) when the backend never replies", async () => {
+    // Regression: previously this returned ALREADY_FINALIZED, which made
+    // the UI show "ride was taken" instead of "network slow, retry".
+    const never = new Promise<OfferAck>(() => undefined);
+    const wrapped = withAckTimeout(never, 3_000);
+    await vi.advanceTimersByTimeAsync(3_000);
+    await expect(wrapped).resolves.toEqual({
+      ok: false,
+      error: { code: "TIMEOUT" }
+    });
+  });
+
+  it("prefers the backend ack when both fire in the same tick", async () => {
+    const fast = Promise.resolve<OfferAck>({
+      ok: false,
+      error: { code: "ALREADY_FINALIZED" }
+    });
+    const wrapped = withAckTimeout(fast, 0);
+    // Real race resolves to the backend ack because microtasks run before
+    // setTimeout(0). UI must see ALREADY_FINALIZED, not TIMEOUT.
+    await expect(wrapped).resolves.toEqual({
+      ok: false,
+      error: { code: "ALREADY_FINALIZED" }
+    });
   });
 });

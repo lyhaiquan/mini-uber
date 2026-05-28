@@ -1,5 +1,5 @@
-import { Button, Card, Text } from "@ridex/ui-mobile";
 import type { PricingSummary } from "@ridex/shared-types";
+import { Button, Card, Text } from "@ridex/ui-mobile";
 import * as React from "react";
 import { Modal, StyleSheet, View } from "react-native";
 

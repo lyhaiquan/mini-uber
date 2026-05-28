@@ -1,7 +1,7 @@
 "use client";
 
 import type { PaymentHistoryResponse } from "@ridex/shared-types";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 
 import { paymentsApi } from "@/lib/api";
 
@@ -10,7 +10,13 @@ const PAGE_SIZE = 20;
 export const paymentHistoryKey = ["payments", "me"] as const;
 
 export function usePaymentHistory() {
-  return useInfiniteQuery<PaymentHistoryResponse, Error, PaymentHistoryResponse, typeof paymentHistoryKey, number>({
+  return useInfiniteQuery<
+    PaymentHistoryResponse,
+    Error,
+    InfiniteData<PaymentHistoryResponse, number>,
+    typeof paymentHistoryKey,
+    number
+  >({
     queryKey: paymentHistoryKey,
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>

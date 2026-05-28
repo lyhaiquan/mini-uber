@@ -1,0 +1,58 @@
+appId: com.ridex.driver
+env:
+  FLOW_PREFIX: complete-ride
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- runScript:
+    file: scripts/prepare-driver.js
+- tapOn:
+    id: driver-login-email
+- inputText: ${output.SEED_DRIVER_EMAIL}
+- tapOn:
+    id: driver-login-password
+- inputText: ${output.SEED_DRIVER_PASSWORD}
+- tapOn:
+    id: driver-login-submit
+- extendedWaitUntil:
+    visible:
+      id: driver-online-toggle-offline
+    timeout: 10000
+- tapOn:
+    id: driver-online-toggle-offline
+- extendedWaitUntil:
+    visible:
+      id: driver-status-online
+    timeout: 5000
+- runScript:
+    file: scripts/dispatch-offer.js
+- extendedWaitUntil:
+    visible:
+      id: driver-offer-screen
+    timeout: 8000
+- tapOn:
+    id: driver-offer-accept
+- extendedWaitUntil:
+    visible:
+      id: driver-current-ride-screen
+    timeout: 8000
+- tapOn:
+    id: driver-transition-arrived
+- tapOn:
+    id: driver-transition-start
+- tapOn:
+    id: driver-transition-complete
+- assertNotVisible:
+    id: driver-empty-state
+- extendedWaitUntil:
+    visible: "Tiếp tục"
+    timeout: 5000
+- assertNotVisible:
+    id: driver-empty-state
+- tapOn: "Tiếp tục"
+- extendedWaitUntil:
+    visible:
+      id: driver-status-online
+    timeout: 5000

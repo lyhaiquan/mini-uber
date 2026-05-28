@@ -1,0 +1,56 @@
+%% Kiến trúc tổng thể RideX — Component diagram
+flowchart TB
+    subgraph CLIENT["Tầng Client (5 surface)"]
+        WC[Web Customer<br/>Next.js 15<br/>:3001]
+        WD[Web Driver<br/>Next.js 15<br/>:3002]
+        WA[Web Admin<br/>Next.js 15<br/>:3003]
+        MC[Mobile Customer<br/>Expo SDK 52<br/>:8081]
+        MD[Mobile Driver<br/>Expo SDK 52<br/>:8082]
+    end
+
+    subgraph GATEWAY["API Gateway"]
+        NEST[NestJS Monolith<br/>REST + WebSocket<br/>:3000/api/v1]
+    end
+
+    subgraph MODULES["Bounded Contexts (NestJS Modules)"]
+        AUTH[Auth Module<br/>JWT + Argon2id]
+        USERS[Users Module]
+        DRIVERS[Drivers Module]
+        LOC[Location Module<br/>+ H3 indexing]
+        GEO[Geo Module<br/>H3 discovery]
+        ROUTING[Routing Module<br/>OSRM]
+        MATCHING[Matching Module<br/>Scoring + Offer]
+        PRICING[Pricing Module<br/>Surge]
+        RIDES[Rides Module<br/>State machine]
+        PAYMENTS[Payments Module<br/>Idempotent + Ledger]
+        ADMIN[Admin Module]
+    end
+
+    subgraph DATA["Tầng dữ liệu"]
+        PG[(PostgreSQL 16<br/>Source of truth)]
+        REDIS[(Redis 7<br/>H3 index + cache<br/>+ BullMQ queue)]
+    end
+
+    subgraph EXTERNAL["Dịch vụ ngoài"]
+        OSRM[OSRM<br/>Routing engine]
+        MAPBOX[Mapbox<br/>Tile + Geocoding]
+    end
+
+    CLIENT -->|HTTPS REST| NEST
+    CLIENT -.->|WSS Socket.IO| NEST
+    NEST --> MODULES
+    MODULES --> PG
+    MODULES --> REDIS
+    ROUTING --> OSRM
+    CLIENT --> MAPBOX
+
+    classDef client fill:#dbeafe,stroke:#2563eb
+    classDef gateway fill:#fef3c7,stroke:#d97706
+    classDef module fill:#dcfce7,stroke:#16a34a
+    classDef data fill:#fce7f3,stroke:#db2777
+    classDef external fill:#f3e8ff,stroke:#9333ea
+    class WC,WD,WA,MC,MD client
+    class NEST gateway
+    class AUTH,USERS,DRIVERS,LOC,GEO,ROUTING,MATCHING,PRICING,RIDES,PAYMENTS,ADMIN module
+    class PG,REDIS data
+    class OSRM,MAPBOX external

@@ -26,7 +26,6 @@ export function OfferScreen({
   onReject,
   onTimeout
 }: OfferScreenProps) {
-  // Hooks must run unconditionally — keep them above any early returns.
   const [secondsLeft, setSecondsLeft] = React.useState<number>(0);
   const vibratedFor = React.useRef<string | null>(null);
 
@@ -36,16 +35,16 @@ export function OfferScreen({
       setSecondsLeft(0);
       return;
     }
-    // Fire vibration exactly once per offer id; re-renders for countdown
-    // updates should not re-trigger it.
+
     if (vibratedFor.current !== offer.offerId) {
       vibratedFor.current = offer.offerId;
       try {
         Vibration.vibrate(200);
       } catch {
-        // Vibration unavailable (e.g. iOS simulator) — silently ignore.
+        // Vibration unavailable (e.g. iOS simulator).
       }
     }
+
     const expiresAtMs = new Date(offer.expiresAt).getTime();
     const tick = () => {
       const remaining = Math.max(0, Math.ceil((expiresAtMs - Date.now()) / 1000));
@@ -54,6 +53,7 @@ export function OfferScreen({
         onTimeout();
       }
     };
+
     tick();
     const id = setInterval(tick, 250);
     return () => clearInterval(id);
@@ -66,7 +66,7 @@ export function OfferScreen({
       transparent={false}
       onRequestClose={onReject}
     >
-      <View style={styles.container}>
+      <View style={styles.container} accessibilityLabel="driver-offer-screen">
         {offer === null ? null : (
           <>
             <View style={styles.countdownWrap}>
@@ -88,15 +88,11 @@ export function OfferScreen({
 
             <View style={styles.metaRow}>
               <Text variant="body">Cách đón</Text>
-              <Text variant="body">
-                {(offer.distanceMeters / 1000).toFixed(2)} km
-              </Text>
+              <Text variant="body">{(offer.distanceMeters / 1000).toFixed(2)} km</Text>
             </View>
             <View style={styles.metaRow}>
               <Text variant="body">Thời gian đến đón</Text>
-              <Text variant="body">
-                {Math.round(offer.durationSeconds / 60)} phút
-              </Text>
+              <Text variant="body">{Math.round(offer.durationSeconds / 60)} phút</Text>
             </View>
             {estimatedPayoutVnd !== null ? (
               <View style={styles.metaRow}>
@@ -106,10 +102,15 @@ export function OfferScreen({
             ) : null}
 
             <View style={styles.actions}>
-              <Button variant="outline" onPress={onReject} disabled={pending}>
+              <Button
+                accessibilityLabel="driver-offer-reject"
+                variant="outline"
+                onPress={onReject}
+                disabled={pending}
+              >
                 Từ chối
               </Button>
-              <Button onPress={onAccept} disabled={pending}>
+              <Button accessibilityLabel="driver-offer-accept" onPress={onAccept} disabled={pending}>
                 {pending ? "..." : "Nhận chuyến"}
               </Button>
             </View>

@@ -1,5 +1,5 @@
-import { MapView, type MapMarkerData } from "@ridex/ui-mobile";
 import { decodePolyline5, type RideDetailResponse } from "@ridex/shared-types";
+import { MapView, type MapMarkerData } from "@ridex/ui-mobile";
 import * as React from "react";
 import { StyleSheet, View } from "react-native";
 

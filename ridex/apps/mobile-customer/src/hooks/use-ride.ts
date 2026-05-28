@@ -1,3 +1,4 @@
+import type { RideDetailResponse, TransitionRideDto } from "@ridex/shared-types";
 import {
   RIDE_DRIVER_LOCATION_EVENT,
   RIDE_STATUS_CHANGED_EVENT,
@@ -6,7 +7,6 @@ import {
   type RideDriverLocationPayload,
   type RideStatusChangedPayload
 } from "@ridex/socket-client";
-import type { RideDetailResponse, TransitionRideDto } from "@ridex/shared-types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 

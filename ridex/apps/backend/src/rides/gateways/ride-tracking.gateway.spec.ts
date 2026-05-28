@@ -4,7 +4,7 @@ import type { ConfigService } from "@nestjs/config";
 import type { JwtService } from "@nestjs/jwt";
 import type { Namespace } from "socket.io";
 
-import { StructuredLogger } from "../../common/logging/structured-logger";
+import type { StructuredLogger } from "../../common/logging/structured-logger";
 import type { EnvironmentVariables } from "../../config/env.validation";
 import type { DriverLocationUpdatedDomainEvent } from "../../location/events/location-events";
 import { Role } from "../../users/dto/role.enum";

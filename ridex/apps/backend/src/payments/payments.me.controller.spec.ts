@@ -6,6 +6,7 @@ import { Reflector } from "@nestjs/core";
 import { ROLES_KEY } from "../auth/guards/roles.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Role } from "../users/dto/role.enum";
+import { PaymentStatus } from "./enums/payment-status.enum";
 import { PaymentsMeController } from "./payments.me.controller";
 import type { PaymentsFacade } from "./payments.facade";
 
@@ -32,7 +33,7 @@ describe("PaymentsMeController", () => {
           rideId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
           totalVnd: 100_000,
           driverShareVnd: 80_000,
-          status: "SUCCEEDED",
+          status: PaymentStatus.SUCCEEDED,
           createdAt: "2026-05-18T03:14:15.000Z",
           completedAt: "2026-05-18T03:20:15.000Z",
           failureReason: null,

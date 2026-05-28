@@ -92,6 +92,7 @@ Mỗi task FE liệt kê backend addons cụ thể.
 | T020 | Driver Offer Modal + In-Ride Screen | 14 | web-driver + mobile-driver | L | T019 + backend addon |
 | T021 | Admin Dashboard UI | 14 | web-admin | M | T014, T016 |
 | T022 | Wallet + Payment History | 15 | web-customer/driver + mobile both | M | All + backend addons |
+| T024 | Driver E2E Maestro | 15+ | mobile-driver | M | T019, T020 |
 
 **Tổng:** 12 task, ước lượng tương đương 8-12 tuần cho 1 dev solo, hoặc 4-6 tuần với Codex implement + Claude review.
 
@@ -161,3 +162,5 @@ Each task có file riêng trong `docs/tasks/`. Xem:
 - `docs/tasks/020-driver-offer-flow.md`
 - `docs/tasks/021-admin-dashboard-ui.md`
 - `docs/tasks/022-wallet-payment-history.md`
+- `docs/tasks/024-driver-e2e-maestro.md`
+- `apps/mobile-driver/.maestro/offer-leak-on-offline.yaml` and `apps/mobile-driver/.maestro/complete-ride-redirect.yaml`

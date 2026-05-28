@@ -53,7 +53,9 @@ export function LocationSearch({
       abortRef.current = controller;
       try {
         const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(trimmed)}.json?access_token=${encodeURIComponent(token)}&country=${country}&limit=${limit}&language=${language}`;
-        const res = await fetch(url, { signal: controller.signal });
+        const res = await fetch(url, {
+          signal: controller.signal as unknown as RequestInit["signal"]
+        });
         if (!res.ok) {
           setResults([]);
           return;

@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 
 import type { RideStatus } from "@ridex/shared-types";
-import { renderToStaticMarkup } from "react-dom/server";
 import * as React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
 
 import { StateMachineStepper } from "../state-machine-stepper";
 

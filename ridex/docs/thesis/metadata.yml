@@ -1,0 +1,16 @@
+---
+title: "Nghiên cứu và xây dựng nền tảng đặt xe trực tuyến RideX dựa trên kiến trúc microservice với NestJS"
+author: "Lý Hải Quân"
+date: "2026"
+lang: vi
+documentclass: report
+fontsize: 13pt
+mainfont: "Times New Roman"
+linestretch: 1.5
+geometry:
+  - margin=2.5cm
+toc: true
+toc-depth: 3
+number-sections: true
+secnumdepth: 3
+---

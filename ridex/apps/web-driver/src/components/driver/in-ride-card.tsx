@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardContent } from "@ridex/ui-web";
 import type { RideDetailResponse, RideStatus } from "@ridex/shared-types";
+import { Card, CardContent } from "@ridex/ui-web";
 
 import { TransitionButton } from "./transition-button";
 

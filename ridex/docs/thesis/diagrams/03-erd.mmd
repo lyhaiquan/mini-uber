@@ -1,0 +1,116 @@
+%% ERD RideX — schema database PostgreSQL
+erDiagram
+    USERS ||--o| DRIVERS : "có hồ sơ tài xế"
+    USERS ||--o{ REFRESH_TOKENS : "sở hữu nhiều"
+    USERS ||--o{ RIDES : "đặt"
+    USERS ||--o{ RIDE_OFFERS : "nhận"
+    USERS ||--o| WALLETS : "có ví"
+    USERS ||--o{ AUDIT_LOGS : "tạo"
+    DRIVERS ||--o{ RIDES : "được giao"
+    RIDES ||--o{ RIDE_OFFERS : "có nhiều offer"
+    RIDES ||--o| PRICING_SNAPSHOTS : "có snapshot giá"
+    RIDES ||--o{ PAYMENTS : "phát sinh"
+    PAYMENTS ||--o{ LEDGER_ENTRIES : "có bút toán"
+
+    USERS {
+        uuid id PK
+        string email UK
+        string password_hash
+        enum role "CUSTOMER|DRIVER|ADMIN"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    DRIVERS {
+        uuid driver_id PK
+        bool is_online
+        timestamp online_since
+        timestamp last_seen_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    REFRESH_TOKENS {
+        uuid id PK
+        uuid user_id FK
+        string token_hash
+        timestamp expires_at
+        timestamp revoked_at
+    }
+
+    RIDES {
+        uuid id PK
+        uuid customer_id FK
+        uuid driver_id FK
+        enum status "REQUESTED|MATCHED|ARRIVED|IN_RIDE|COMPLETED|CANCELLED|FAILED"
+        point pickup_location
+        string pickup_address
+        point destination_location
+        string destination_address
+        timestamp requested_at
+        timestamp matched_at
+        timestamp completed_at
+    }
+
+    RIDE_OFFERS {
+        uuid id PK
+        uuid ride_id FK
+        uuid driver_user_id FK
+        enum status "OFFERED|ACCEPTED|REJECTED|TIMED_OUT|CANCELLED"
+        decimal score
+        int distance_meters
+        int eta_seconds
+        timestamp offered_at
+        timestamp responded_at
+    }
+
+    PRICING_SNAPSHOTS {
+        uuid id PK
+        uuid ride_id UK
+        bigint base_fare_vnd
+        bigint distance_fare_vnd
+        bigint time_fare_vnd
+        decimal surge_multiplier
+        bigint total_vnd
+        timestamp locked_at
+    }
+
+    WALLETS {
+        uuid id PK
+        uuid user_id UK
+        enum kind "CUSTOMER|DRIVER|PLATFORM"
+        bigint balance_vnd
+        string currency "VND"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PAYMENTS {
+        uuid id PK
+        uuid ride_id FK
+        string idempotency_key UK
+        enum status "PENDING|SUCCEEDED|FAILED_INSUFFICIENT_BALANCE|FAILED_MISSING_SNAPSHOT"
+        bigint total_vnd
+        bigint driver_share_vnd
+        bigint platform_share_vnd
+        string failure_reason
+        timestamp created_at
+        timestamp completed_at
+    }
+
+    LEDGER_ENTRIES {
+        uuid id PK
+        uuid payment_id FK
+        uuid wallet_id FK
+        enum direction "DEBIT|CREDIT"
+        bigint amount_vnd
+        timestamp created_at
+    }
+
+    AUDIT_LOGS {
+        uuid id PK
+        uuid actor_user_id FK
+        string action
+        jsonb metadata
+        timestamp created_at
+    }

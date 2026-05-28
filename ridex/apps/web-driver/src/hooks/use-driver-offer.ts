@@ -5,6 +5,7 @@ import {
   rejectOffer,
   RIDE_OFFER_CANCELLED_EVENT,
   RIDE_OFFER_RECEIVED_EVENT,
+  withAckTimeout,
   type OfferAck,
   type OfferCancelledPayload,
   type OfferReceivedPayload
@@ -61,7 +62,14 @@ export function useDriverOffer(opts: { enabled: boolean }): UseDriverOfferResult
   });
 
   React.useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      // Driver went offline (or got an active ride) — drop any in-flight
+      // offer state and the polled cache so a stale modal can't outlive the
+      // online toggle.
+      setOffer(null);
+      void qc.invalidateQueries({ queryKey: offerKeys.current() });
+      return;
+    }
     const socket = getDriverSocket();
     if (!socket.connected) socket.connect();
 
@@ -89,7 +97,7 @@ export function useDriverOffer(opts: { enabled: boolean }): UseDriverOfferResult
 
   const accept = React.useCallback(async (offerId: string) => {
     const socket = getDriverSocket();
-    const ack = await withTimeout(acceptOffer(socket, offerId), 3_000);
+    const ack = await withAckTimeout(acceptOffer(socket, offerId), 3_000);
     if (ack.ok) {
       setOffer(null);
     }
@@ -98,7 +106,7 @@ export function useDriverOffer(opts: { enabled: boolean }): UseDriverOfferResult
 
   const reject = React.useCallback(async (offerId: string, reason?: string) => {
     const socket = getDriverSocket();
-    const ack = await withTimeout(rejectOffer(socket, offerId, reason), 3_000);
+    const ack = await withAckTimeout(rejectOffer(socket, offerId, reason), 3_000);
     // Optimistically clear — even a race-lost reject leaves the driver
     // free of this particular offer.
     setOffer(null);
@@ -108,19 +116,4 @@ export function useDriverOffer(opts: { enabled: boolean }): UseDriverOfferResult
   const clear = React.useCallback(() => setOffer(null), []);
 
   return { offer, accept, reject, clear };
-}
-
-// Backend acks the WS emit, but if the socket is wedged we don't want the
-// modal to stall forever — spec calls for a 3s ack timeout that surfaces a
-// "network slow, retry" toast.
-function withTimeout(promise: Promise<OfferAck>, ms: number): Promise<OfferAck> {
-  return Promise.race<OfferAck>([
-    promise,
-    new Promise<OfferAck>((resolve) =>
-      setTimeout(
-        () => resolve({ ok: false, error: { code: "ALREADY_FINALIZED" } }),
-        ms
-      )
-    )
-  ]);
 }

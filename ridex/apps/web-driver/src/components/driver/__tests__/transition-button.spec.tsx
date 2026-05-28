@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
-import { renderToStaticMarkup } from "react-dom/server";
 import * as React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 
 import { TransitionButton } from "../transition-button";
 

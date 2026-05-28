@@ -39,6 +39,7 @@ export default function DriverLoginScreen() {
         <Card>
           <View className="gap-3">
             <Input
+              accessibilityLabel="driver-login-email"
               placeholder="Email"
               autoCapitalize="none"
               keyboardType="email-address"
@@ -47,6 +48,7 @@ export default function DriverLoginScreen() {
               editable={!submitting}
             />
             <Input
+              accessibilityLabel="driver-login-password"
               placeholder="Mật khẩu"
               secureTextEntry
               value={password}
@@ -58,7 +60,11 @@ export default function DriverLoginScreen() {
                 {error}
               </Text>
             ) : null}
-            <Button onPress={handleSubmit} disabled={submitting}>
+            <Button
+              accessibilityLabel="driver-login-submit"
+              onPress={handleSubmit}
+              disabled={submitting}
+            >
               {submitting ? "Đang xử lý..." : "Đăng nhập"}
             </Button>
           </View>

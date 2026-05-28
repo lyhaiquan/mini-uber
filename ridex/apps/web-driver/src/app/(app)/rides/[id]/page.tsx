@@ -26,15 +26,32 @@ export default function DriverRidePage() {
   const ride = activeQuery.data ?? null;
   const matches = ride !== null && ride.id === rideId;
 
-  // Completed → toast + redirect home. Use a ref so the toast fires once.
-  const completedShown = React.useRef(false);
+  // Pricing only lives on RideDetailResponse (the active-ride query). The
+  // transition mutation returns RideResponse without pricing, and the query
+  // returns null after COMPLETED is persisted (backend's active-ride
+  // whitelist excludes terminal statuses). Capture the last seen pricing so
+  // the payout toast still has the number when completion lands.
+  const lastPricingRef = React.useRef<{ totalVnd: number } | null>(null);
   React.useEffect(() => {
-    if (ride === null) return;
-    if (ride.status !== "COMPLETED") return;
+    if (ride !== null && ride.pricing !== null) {
+      lastPricingRef.current = { totalVnd: ride.pricing.totalVnd };
+    }
+  }, [ride]);
+
+  // Drive completion off the mutation result, not the query — the query
+  // returns null the moment the ride leaves the active whitelist, so we'd
+  // otherwise flash "no active ride" and never show the toast.
+  const completedShown = React.useRef(false);
+  const [completing, setCompleting] = React.useState(false);
+  React.useEffect(() => {
+    const updated = transition.data;
+    if (updated === undefined) return;
+    if (updated.status !== "COMPLETED") return;
     if (completedShown.current) return;
     completedShown.current = true;
-    const payout =
-      ride.pricing !== null ? Math.round(ride.pricing.totalVnd * 0.8) : null;
+    setCompleting(true);
+    const pricing = lastPricingRef.current;
+    const payout = pricing !== null ? Math.round(pricing.totalVnd * 0.8) : null;
     toast.success(
       payout !== null
         ? `Hoàn thành! Ước tính thu nhập: ${vnd.format(payout)} ₫`
@@ -42,7 +59,15 @@ export default function DriverRidePage() {
     );
     const id = window.setTimeout(() => router.replace("/home"), 1_500);
     return () => window.clearTimeout(id);
-  }, [ride, router]);
+  }, [transition.data, router]);
+
+  if (completing) {
+    return (
+      <section className="space-y-3">
+        <p className="text-sm">Đang hoàn tất chuyến...</p>
+      </section>
+    );
+  }
 
   if (activeQuery.isLoading) {
     return <p className="text-sm text-surface-600 dark:text-surface-300">Đang tải...</p>;

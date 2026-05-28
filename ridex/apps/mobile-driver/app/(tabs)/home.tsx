@@ -41,9 +41,6 @@ export default function HomeTab() {
   const isOnline = availability.data?.isOnline ?? false;
   const router = useRouter();
 
-  // Restore the in-ride screen on cold start / reload: the backend tells us
-  // which ride (if any) is currently assigned, and we jump straight to it
-  // so the driver isn't asked to navigate manually.
   const activeRide = useDriverActiveRide();
   React.useEffect(() => {
     const ride = activeRide.data;
@@ -92,9 +89,6 @@ export default function HomeTab() {
     }
   });
 
-  // AppState listener: when the app moves to background per spec, send a
-  // best-effort offline so the server doesn't keep the driver in the pool
-  // while their device is suspended (foreground-only stream).
   React.useEffect(() => {
     if (!isOnline) return;
     const handler = (next: AppStateStatus) => {
@@ -105,15 +99,6 @@ export default function HomeTab() {
     const sub = AppState.addEventListener("change", handler);
     return () => sub.remove();
   }, [isOnline, goOffline]);
-
-  if (!mapboxToken) {
-    return (
-      <Screen>
-        <Text variant="h2">Cần Mapbox token</Text>
-        <Text variant="body">Đặt extra.mapboxToken trong app.json.</Text>
-      </Screen>
-    );
-  }
 
   if (permission.isLoading || permission.status === "undetermined") {
     return (
@@ -200,7 +185,14 @@ export default function HomeTab() {
         </Text>
       </View>
       <View style={styles.mapWrap}>
-        <DriverMap mapboxToken={mapboxToken} />
+        {mapboxToken ? (
+          <DriverMap mapboxToken={mapboxToken} />
+        ) : (
+          <View style={styles.mapFallback} accessibilityLabel="driver-map-fallback">
+            <Text variant="body">Bản đồ tạm tắt</Text>
+            <Text variant="caption">Thiếu Mapbox token, nhưng flow lái xe vẫn hoạt động.</Text>
+          </View>
+        )}
       </View>
 
       <OfferScreen
@@ -237,5 +229,14 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   toggleWrap: { alignItems: "center", gap: 8, marginVertical: 12 },
   mapWrap: { flex: 1, marginTop: 8, borderRadius: 8, overflow: "hidden" },
-  map: { width: "100%", height: 320 }
+  map: { width: "100%", height: 320 },
+  mapFallback: {
+    width: "100%",
+    height: 320,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#e5e7eb",
+    padding: 16
+  }
 });

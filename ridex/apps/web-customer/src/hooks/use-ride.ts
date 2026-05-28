@@ -1,5 +1,6 @@
 "use client";
 
+import type { RideDetailResponse } from "@ridex/shared-types";
 import {
   RIDE_DRIVER_LOCATION_EVENT,
   RIDE_STATUS_CHANGED_EVENT,
@@ -8,14 +9,14 @@ import {
   type RideDriverLocationPayload,
   type RideStatusChangedPayload
 } from "@ridex/socket-client";
-import type { RideDetailResponse } from "@ridex/shared-types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
+
+import { rideKeys } from "./use-rides";
 
 import { ridesApi } from "@/lib/api";
 import { getTrackingSocket } from "@/lib/socket";
 
-import { rideKeys } from "./use-rides";
 
 // Polling fallback when the socket disconnects. 5s matches the task spec; we
 // keep the query alive but stale so re-focus doesn't double-fetch.

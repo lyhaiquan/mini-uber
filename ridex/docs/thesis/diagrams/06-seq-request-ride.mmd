@@ -1,0 +1,29 @@
+%% Sequence: Khách đặt xe
+sequenceDiagram
+    autonumber
+    actor C as Khách hàng<br/>(Mobile/Web)
+    participant API as NestJS API
+    participant PR as PricingService
+    participant R as RidesService
+    participant DB as PostgreSQL
+    participant EB as EventBus
+
+    C->>API: POST /rides/quote<br/>{pickup, destination}
+    API->>PR: estimate(pickup, destination)
+    PR->>PR: OSRM route + surge calc
+    PR-->>API: PricingEstimate
+    API-->>C: 200 {estimate}
+
+    C->>API: POST /rides<br/>{pickup, destination, estimate}
+    API->>API: AuthGuard + validate
+    API->>R: createRide(customerId, input)
+    R->>DB: BEGIN
+    R->>DB: INSERT rides (status=REQUESTED)
+    R->>PR: lockSnapshot(rideId)
+    PR->>DB: INSERT pricing_snapshots
+    R->>DB: COMMIT
+    R->>EB: emit ride.requested
+    R-->>API: Ride{id, status=REQUESTED}
+    API-->>C: 201 {ride}
+
+    Note over EB: MatchingService<br/>lắng nghe<br/>(xem sequence 07)
